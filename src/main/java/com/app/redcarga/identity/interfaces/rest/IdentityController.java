@@ -2,7 +2,7 @@ package com.app.redcarga.identity.interfaces.rest;
 
 import com.app.redcarga.identity.domain.model.commands.VerifyAndCreatePersonCommand;
 import com.app.redcarga.identity.domain.services.PersonCommandService;
-import com.app.redcarga.identity.infrastructure.security.AccountOwnershipGuard;
+import com.app.redcarga.shared.infrastructure.security.AccountOwnershipGuard;
 import com.app.redcarga.identity.interfaces.rest.requests.VerifyAndCreateRequest;
 import com.app.redcarga.identity.interfaces.rest.responses.VerifyAndCreateResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

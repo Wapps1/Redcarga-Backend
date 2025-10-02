@@ -12,7 +12,7 @@ import com.app.redcarga.iam.domain.model.valueobjects.SignupStatus;
 import com.app.redcarga.iam.domain.repositories.AccountRepository;
 import com.app.redcarga.iam.domain.repositories.SignupIntentRepository;
 import com.app.redcarga.iam.domain.repositories.SystemRoleRepository;
-import com.app.redcarga.iam.domain.model.valueobjects.Email;
+import com.app.redcarga.shared.domain.model.valueobjects.Email;
 import com.app.redcarga.iam.domain.model.valueobjects.ExternalUid;
 import com.app.redcarga.iam.domain.model.valueobjects.Username;
 import org.springframework.beans.factory.annotation.Value;

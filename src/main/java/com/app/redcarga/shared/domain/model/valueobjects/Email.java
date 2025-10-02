@@ -1,4 +1,4 @@
-package com.app.redcarga.iam.domain.model.valueobjects;
+package com.app.redcarga.shared.domain.model.valueobjects;
 
 import java.util.regex.Pattern;
 

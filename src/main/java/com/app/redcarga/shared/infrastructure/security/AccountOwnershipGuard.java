@@ -1,7 +1,6 @@
-package com.app.redcarga.identity.infrastructure.security;
+package com.app.redcarga.shared.infrastructure.security;
 
 import com.app.redcarga.identity.application.internal.outboundservices.acl.IamAccountService;
-import com.app.redcarga.shared.infrastructure.security.TokenClaims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;

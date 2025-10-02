@@ -42,4 +42,22 @@ public class MultiFlywayConfig {
         flyway.migrate();
         return flyway;
     }
+
+    @Bean
+    @Order(3) // luego Providers
+    public Flyway flywayProviders(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("providers")
+                .table("flyway_history_providers")
+                .locations("classpath:db/migration/providers")
+                //.baselineOnMigrate(true) // si 'providers' ya tenía tablas
+                //.baselineVersion("1")
+                //.validateOnMigrate(true)
+                .group(true)
+                .cleanDisabled(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
 }
