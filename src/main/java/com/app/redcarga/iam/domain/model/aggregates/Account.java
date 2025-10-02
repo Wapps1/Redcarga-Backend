@@ -5,7 +5,7 @@ import com.app.redcarga.iam.domain.model.valueobjects.AccountStatus;
 import com.app.redcarga.iam.domain.model.valueobjects.RoleCode;
 import com.app.redcarga.iam.domain.model.events.AccountRegistered;
 import com.app.redcarga.iam.domain.model.events.EmailVerified;
-import com.app.redcarga.iam.domain.model.valueobjects.Email;
+import com.app.redcarga.shared.domain.model.valueobjects.Email;
 import com.app.redcarga.iam.domain.model.valueobjects.ExternalUid;
 import com.app.redcarga.iam.domain.model.valueobjects.Username;
 import jakarta.persistence.*;

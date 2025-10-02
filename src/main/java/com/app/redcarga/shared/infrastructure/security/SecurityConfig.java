@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/identity/verify-and-create").access(firebaseOrIam)
                         // onboarding: acepta Firebase (y también IAM si llega)
                         .requestMatchers("/iam/login", "/iam/resend-email-verification").access(firebaseOrIam)
-
+                        .requestMatchers("/providers/company/verify-and-register").access(firebaseOrIam)
                         // resto: SOLO IAM
                         .anyRequest().access(iamOnly)
                 )

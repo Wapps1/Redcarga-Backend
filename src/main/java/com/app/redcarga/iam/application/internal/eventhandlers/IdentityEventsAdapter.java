@@ -9,6 +9,7 @@ import com.app.redcarga.shared.events.identity.ClientKycPassedEvent;
 import com.app.redcarga.shared.events.identity.ProviderKycPassedEvent;
 // import com.app.redcarga.shared.events.providers.ProviderOnboardedEvent;
 
+import com.app.redcarga.shared.events.providers.ProviderOnboardedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -47,8 +48,8 @@ public class IdentityEventsAdapter {
         ));
     }
 
-    /*
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+
+    @EventListener
     public void onProviderOnboarded(ProviderOnboardedEvent e) {
         handler.onProviderOnboarded(new ProviderOnboarded(
                 toUuid(e.eventId()),
@@ -57,7 +58,7 @@ public class IdentityEventsAdapter {
                 Integer.valueOf(e.schemaVersion())
         ));
     }
-    */
+
 
     // --- helpers ---
 

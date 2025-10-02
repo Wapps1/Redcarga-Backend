@@ -1,5 +1,6 @@
-package com.app.redcarga.identity.application.internal.outboundservices.events;
+package com.app.redcarga.providers.infrastructure.events;
 
+import com.app.redcarga.providers.application.internal.outboundservices.events.ProvidersEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -10,7 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class SpringIdentityEventPublisher implements IdentityEventPublisher {
+public class SpringProvidersEventPublisher implements ProvidersEventPublisher {
     private final ApplicationEventPublisher spring;
 
     @Override
@@ -18,13 +19,14 @@ public class SpringIdentityEventPublisher implements IdentityEventPublisher {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override public void afterCommit() {
-                    log.info("[IdentityEventPublisher] publish AFTER_COMMIT {}", event.getClass().getSimpleName());
+                    log.info("[ProvidersEventPublisher] AFTER_COMMIT {}", event.getClass().getSimpleName());
                     spring.publishEvent(event);
                 }
             });
         } else {
-            log.info("[IdentityEventPublisher] publish immediate {}", event.getClass().getSimpleName());
+            log.info("[ProvidersEventPublisher] immediate {}", event.getClass().getSimpleName());
             spring.publishEvent(event);
         }
     }
 }
+
