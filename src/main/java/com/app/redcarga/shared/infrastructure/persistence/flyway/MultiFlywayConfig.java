@@ -60,4 +60,36 @@ public class MultiFlywayConfig {
         flyway.migrate();
         return flyway;
     }
+
+    @Bean
+    @Order(4)
+    public Flyway flywayAdminGeo(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("geo")
+                .table("flyway_history_geo")
+                .locations("classpath:db/migration/geo")
+                .group(true)
+                .cleanDisabled(true)
+                // .baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
+
+    @Bean
+    @Order(5)
+    public Flyway flywayPlanning(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("planning")
+                .table("flyway_history_planning")
+                .locations("classpath:db/migration/planning")
+                .group(true)
+                .cleanDisabled(true)
+                // .baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
 }

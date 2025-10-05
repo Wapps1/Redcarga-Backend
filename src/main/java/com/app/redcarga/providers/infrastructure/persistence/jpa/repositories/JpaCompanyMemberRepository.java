@@ -18,4 +18,10 @@ public interface JpaCompanyMemberRepository
     default boolean existsActiveByAccountId(Integer accountId) {
         return existsByIdAccountIdAndStatus(accountId, MembershipStatus.ACTIVE);
     }
+
+    boolean existsByIdCompanyIdAndIdAccountIdAndStatus(Integer companyId, Integer accountId, MembershipStatus status);
+    @Override
+    default boolean existsActiveByCompanyIdAndAccountId(Integer companyId, Integer accountId) {
+        return existsByIdCompanyIdAndIdAccountIdAndStatus(companyId, accountId, MembershipStatus.ACTIVE);
+    }
 }

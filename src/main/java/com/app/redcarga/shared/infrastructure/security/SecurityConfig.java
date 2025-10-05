@@ -32,7 +32,8 @@ public class SecurityConfig {
                                 "/actuator/health",
                                 "/iam/register-start",
                                 "/iam/email-verification/continue",
-                                "/_dev/**"
+                                "/_dev/**",
+                                "/geo/**"
                         ).permitAll()
 
                         .requestMatchers("/identity/verify-and-create").access(firebaseOrIam)
