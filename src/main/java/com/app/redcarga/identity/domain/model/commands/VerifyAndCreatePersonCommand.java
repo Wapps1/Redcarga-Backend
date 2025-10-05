@@ -7,5 +7,7 @@ public record VerifyAndCreatePersonCommand(
         String fullName,
         String docTypeCode,   // "DNI" | "CE" | "PAS"
         String docNumber,
-        LocalDate birthDate
+        LocalDate birthDate,
+        String phone,
+        String ruc
 ) {}

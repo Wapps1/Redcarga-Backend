@@ -11,5 +11,7 @@ public record VerifyAndCreateRequest(
         @NotBlank String fullName,
         @NotBlank String docTypeCode,   // "DNI" | "CE" | "PAS"
         @NotBlank String docNumber,
-        @NotNull @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthDate
+        @NotNull @JsonFormat(pattern = "yyyy-MM-dd") LocalDate birthDate,
+        @NotNull String phone,
+        @NotBlank String ruc
 ) {}
