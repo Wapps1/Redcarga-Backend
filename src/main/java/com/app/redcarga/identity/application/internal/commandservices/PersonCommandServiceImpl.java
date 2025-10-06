@@ -85,7 +85,9 @@ public class PersonCommandServiceImpl implements PersonCommandService {
                 new FullName(c.fullName()),
                 birth,
                 docTypeId,
-                normalizedDocNumber
+                normalizedDocNumber,
+                c.phone(),
+                c.ruc()
         );
         person = personRepo.save(person);
 

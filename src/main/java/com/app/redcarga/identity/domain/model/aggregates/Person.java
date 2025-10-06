@@ -43,20 +43,31 @@ public class Person extends AuditableAbstractAggregateRoot<Person> {
     @Column(name = "doc_number", nullable = false, length = 32)
     private String docNumber;
 
+    @Column(name = "phone", nullable = false, length = 20)
+    private String phone;
+
+    @Column(name = "ruc", length = 11)
+    private String ruc;
+
     public Person(Integer accountId,
                   FullName fullName,
                   BirthDate birthDate,
                   Integer docTypeId,
-                  String docNumber) {
+                  String docNumber,
+                  String phone,
+                  String ruc) {
         if (accountId == null) throw new IllegalArgumentException("accountId required");
         if (docTypeId == null) throw new IllegalArgumentException("docTypeId required");
         if (docNumber == null || docNumber.isBlank()) throw new IllegalArgumentException("docNumber required");
         if (!birthDate.isAdult(18)) throw new com.app.redcarga.identity.domain.exceptions.UnderagePersonException();
+        if (phone == null || phone.isBlank()) throw new IllegalArgumentException("phone required");
 
         this.accountId = accountId;
         this.fullName = fullName.toString();
         this.birthDate = birthDate.toLocalDate();
         this.docTypeId = docTypeId;
         this.docNumber = docNumber.trim();
+        this.phone = phone.trim();
+        this.ruc = (ruc == null || ruc.isBlank()) ? null : ruc.trim();
     }
 }

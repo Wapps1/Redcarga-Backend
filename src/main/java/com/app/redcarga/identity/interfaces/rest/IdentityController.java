@@ -29,7 +29,9 @@ public class IdentityController {
                 req.fullName(),
                 req.docTypeCode(),
                 req.docNumber(),
-                req.birthDate()
+                req.birthDate(),
+                req.phone(),
+                req.ruc()
         );
 
         var person = personCommands.handle(cmd);
