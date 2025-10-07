@@ -94,6 +94,23 @@ public class MultiFlywayConfig {
         return flyway;
     }
 
+    // === Fleet (depende de Providers por company_id) ===
+    @Bean(name = "flywayFleet")
+    @DependsOn({"flywayIam", "flywayProviders"})
+    public Flyway flywayFleet(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("fleet")
+                .table("flyway_history_fleet")
+                .locations("classpath:db/migration/fleet")
+                .createSchemas(true)
+                .group(true)
+                .cleanDisabled(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
+
     @Bean
     @Order(6)
     public Flyway flywayRequests(DataSource ds) {
