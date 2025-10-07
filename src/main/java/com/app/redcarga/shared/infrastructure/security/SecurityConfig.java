@@ -33,7 +33,8 @@ public class SecurityConfig {
                                 "/iam/register-start",
                                 "/iam/email-verification/continue",
                                 "/_dev/**",
-                                "/geo/**"
+                                "/geo/**",
+                                "/ws/**"
                         ).permitAll()
 
                         .requestMatchers("/identity/verify-and-create").access(firebaseOrIam)

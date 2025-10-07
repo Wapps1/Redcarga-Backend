@@ -92,4 +92,20 @@ public class MultiFlywayConfig {
         flyway.migrate();
         return flyway;
     }
+
+    @Bean
+    @Order(6)
+    public Flyway flywayRequests(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("requests")
+                .table("flyway_history_requests")
+                .locations("classpath:db/migration/requests")
+                .group(true)
+                .cleanDisabled(true)
+                // .baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
 }
