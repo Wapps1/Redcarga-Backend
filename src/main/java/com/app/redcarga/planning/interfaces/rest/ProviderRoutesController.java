@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class ProviderRoutesController {
     private final TokenClaims claims;
 
     @PostMapping("/companies/{companyId}/routes")
+    @PreAuthorize("hasRole('PROVIDER')")
     @Operation(summary = "Registrar una ruta (DD o PP) para la compañía indicada")
     public ResponseEntity<RegisterProviderRouteResponse> register(
             @PathVariable int companyId,
@@ -31,14 +33,13 @@ public class ProviderRoutesController {
         int actorAccountId = claims.accountIdClaim()
                 .orElseThrow(() -> new AccessDeniedException("account_id_missing"));
 
-        // Normaliza strings vacíos a null para provincias (para no forzar al cliente a enviar null)
         String op = emptyToNull(req.originProvinceCode());
         String dp = emptyToNull(req.destProvinceCode());
 
         var cmd = new RegisterProviderRouteCommand(
                 companyId,
                 req.routeTypeId(),
-                null, // shape: la app lo resuelve desde el catálogo por routeTypeId
+                null, 
                 req.originDepartmentCode(),
                 req.destDepartmentCode(),
                 op,
