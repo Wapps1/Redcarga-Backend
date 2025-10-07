@@ -67,13 +67,7 @@ public class ProviderRoutesController {
     @Operation(summary = "List provider routes",
             description = "Devuelve las rutas publicadas por la empresa indicada. Filtros opcionales de shape y ubicación.")
     public ResponseEntity<List<ProviderRouteView>> listProviderRoutes(
-            @PathVariable int companyId,
-            @RequestParam(required = false) String shape,
-            @RequestParam(required = false) Boolean active,
-            @RequestParam(required = false) String originDepartmentCode,
-            @RequestParam(required = false) String originProvinceCode,
-            @RequestParam(required = false) String destDepartmentCode,
-            @RequestParam(required = false) String destProvinceCode
+            @PathVariable int companyId
     ) {
         int actorAccountId = claims.accountIdClaim()
                 .orElseThrow(() -> new AccessDeniedException("missing_account_id_claim"));
@@ -82,10 +76,7 @@ public class ProviderRoutesController {
             throw new AccessDeniedException("not_a_member_of_company");
         }
 
-        var data = services.listRoutes(companyId, shape, active,
-                originDepartmentCode, originProvinceCode,
-                destDepartmentCode, destProvinceCode);
-
-        return ResponseEntity.ok(data);
+        var result = services.listRoutes(companyId);
+        return ResponseEntity.ok(result);
     }
 }

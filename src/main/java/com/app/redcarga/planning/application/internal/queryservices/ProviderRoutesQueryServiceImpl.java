@@ -16,15 +16,7 @@ public class ProviderRoutesQueryServiceImpl implements ProviderRoutesQueryServic
     private final ProviderRoutesQueryRepository repo;
 
     @Override
-    public List<ProviderRouteView> listRoutes(
-            int companyId,
-            String shape,
-            Boolean active,
-            String originDepartmentCode,
-            String originProvinceCode,
-            String destDepartmentCode,
-            String destProvinceCode
-    ) {
-        return repo.findByCompany(companyId, shape, active, originDepartmentCode, originProvinceCode, destDepartmentCode, destProvinceCode);
+    public List<ProviderRouteView> listRoutes(int companyId) {
+        return repo.findByCompany(companyId);
     }
 }
