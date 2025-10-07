@@ -3,7 +3,6 @@ package com.app.redcarga.iam.application.internal.commandservices;
 import com.app.redcarga.iam.application.internal.gateways.AuthProviderGateway;
 import com.app.redcarga.iam.domain.model.aggregates.Account;
 import com.app.redcarga.iam.domain.model.aggregates.Session;
-import com.app.redcarga.iam.domain.model.aggregates.SignupIntent;
 import com.app.redcarga.iam.domain.model.commands.CreateSessionCommand;
 import com.app.redcarga.iam.domain.model.commands.LogoutCommand;
 import com.app.redcarga.iam.domain.model.valueobjects.Platform;
@@ -20,7 +19,6 @@ import java.net.UnknownHostException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class AuthCommandService {
@@ -93,7 +91,11 @@ public class AuthCommandService {
             );
         }
 
-        // 2) Registro completo (DONE) -> crear Session
+        // 2) Cargar Account para obtener datos del usuario
+        var account = accountRepo.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        // 3) Registro completo (DONE) -> crear Session
         var plat = Platform.valueOf(platform.toUpperCase());
         var expiresAt = Instant.now(clock).plusSeconds(ttlSeconds);
         InetAddress addr = null;
@@ -104,17 +106,21 @@ public class AuthCommandService {
         var session = new Session(accountId, plat, addr, expiresAt);
         sessionRepo.save(session);
 
-        // 3) sys_roles desde Account (ajusta según tu modelo)
+        // 4) sys_roles desde Account (ajusta según tu modelo)
         var sysRoles = resolveSystemRoles(accountId);
 
-        // 4) Emitir JWT IAM
+        // 5) Emitir JWT IAM
         var issued = jwtIssuer.issueAccessToken(accountId, session.getId(), sysRoles);
 
         return LoginOutcome.ok(
                 session.getId(),
+                accountId,
                 issued.accessToken(),
                 issued.tokenType(),
-                issued.expiresIn()
+                issued.expiresIn(),
+                expiresAt.toEpochMilli(),
+                sysRoles,
+                account
         );
     }
 
@@ -158,9 +164,16 @@ public class AuthCommandService {
 
     /** Resultado polimórfico del login */
     public sealed interface LoginOutcome permits LoginOutcome.Ok, LoginOutcome.Incomplete {
-        record Ok(Integer sessionId, String accessToken, String tokenType, long expiresIn) implements LoginOutcome {}
+        record Ok(Integer sessionId, Integer accountId, String accessToken, String tokenType, 
+                  long expiresIn, long expiresAt, List<String> roles, Account account) implements LoginOutcome {}
         record Incomplete(Integer accountId, String signupStatus, List<String> pending, String nextStep) implements LoginOutcome {}
-        static Ok ok(Integer sessionId, String token, String type, long exp) { return new Ok(sessionId, token, type, exp); }
-        static Incomplete incomplete(Integer accountId, String status, List<String> pending, String next) { return new Incomplete(accountId, status, pending, next); }
+        
+        static Ok ok(Integer sessionId, Integer accountId, String token, String type, long exp, 
+                     long expiresAt, List<String> roles, Account account) { 
+            return new Ok(sessionId, accountId, token, type, exp, expiresAt, roles, account); 
+        }
+        static Incomplete incomplete(Integer accountId, String status, List<String> pending, String next) { 
+            return new Incomplete(accountId, status, pending, next); 
+        }
     }
 }

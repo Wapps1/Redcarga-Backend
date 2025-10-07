@@ -9,7 +9,6 @@ import com.app.redcarga.iam.application.internal.queryservices.BootstrapQuerySer
 import com.app.redcarga.iam.application.internal.queryservices.RegistrationQueryService;
 import com.app.redcarga.iam.application.internal.views.BootstrapView;
 import com.app.redcarga.iam.application.internal.views.RegisterStartResult;
-import com.app.redcarga.iam.domain.model.commands.CreateSessionCommand;
 import com.app.redcarga.iam.domain.model.commands.LogoutCommand;
 import com.app.redcarga.iam.domain.model.commands.MarkEmailVerifiedCommand;
 import com.app.redcarga.iam.domain.model.commands.RegisterStartCommand;
@@ -117,7 +116,20 @@ public class IamController {
             );
         }
         var ok = (AuthCommandService.LoginOutcome.Ok) outcome;
-        return ResponseEntity.ok(LoginOkResponse.of(ok.sessionId(), ok.accessToken(), ok.expiresIn()));
+        return ResponseEntity.ok(LoginOkResponse.of(
+            ok.sessionId(),
+            ok.accountId(),
+            ok.accessToken(),
+            ok.expiresIn(),
+            ok.expiresAt(),
+            ok.roles(),
+            new LoginOkResponse.AccountInfo(
+                ok.account().getUsername(),
+                ok.account().getEmail(),
+                ok.account().isEmailVerified(),
+                ok.account().getUpdatedAt().getTime()
+            )
+        ));
     }
 
 
