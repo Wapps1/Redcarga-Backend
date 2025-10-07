@@ -26,7 +26,7 @@ public class PgProviderRoutesQueryRepository implements ProviderRoutesQueryRepos
             rs.getString("origin_province_code"),
             rs.getString("dest_department_code"),
             rs.getString("dest_province_code"),
-            rs.getBoolean("active")
+            rs.getBoolean("is_active")
     );
 
     @Override
@@ -48,7 +48,7 @@ public class PgProviderRoutesQueryRepository implements ProviderRoutesQueryRepos
                    r.origin_province_code,
                    r.dest_department_code,
                    r.dest_province_code,
-                   r.active
+                   r.is_active
             FROM planning.provider_routes r
             JOIN providers.companies c   ON c.company_id = r.company_id
             JOIN planning.route_types rt ON rt.route_type_id = r.route_type_id
@@ -63,7 +63,7 @@ public class PgProviderRoutesQueryRepository implements ProviderRoutesQueryRepos
             params.addValue("shape", shape.trim().toUpperCase());
         }
         if (active != null) {
-            conds.add("r.active = :active");
+            conds.add("r.is_active = :active");
             params.addValue("active", active);
         }
         if (originDepartmentCode != null && !originDepartmentCode.isBlank()) {
