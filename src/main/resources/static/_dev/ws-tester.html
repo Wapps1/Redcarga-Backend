@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <title>WS Tester (STOMP)</title>
+    <style>
+        body { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding:16px }
+        input,button { font-size:14px; padding:6px }
+        #log { white-space: pre-wrap; border:1px solid #ccc; padding:8px; height:300px; overflow:auto; margin-top:12px }
+        .row { margin:6px 0 }
+        .error { color: #d32f2f; }
+        .success { color: #388e3c; }
+        .warning { color: #f57c00; }
+    </style>
+    <!-- stompjs via unpkg -->
+    <script src="https://unpkg.com/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<h3>WS Tester</h3>
+
+<div class="row">
+    <label>JWT: <input id="jwt" size="80" placeholder="pega tu JWT aquí" /></label>
+</div>
+<div class="row">
+    <label>URL WS: <input id="url" size="60" value="ws://localhost:8080/ws" /></label>
+</div>
+<div class="row">
+    <button id="btnConnect">Conectar</button>
+    <button id="btnDisconnect">Desconectar</button>
+</div>
+
+<hr/>
+
+<div class="row">
+    <button id="subUser">SUB /user/queue/planning/solicitudes</button>
+</div>
+<div class="row">
+    <label>Company ID: <input id="cid" size="8" value="999" /></label>
+    <button id="subBad">SUB /topic/planning/company.{cid}.solicitudes</button>
+</div>
+<div class="row">
+    <label>Company OK: <input id="cidok" size="8" value="2" /></label>
+    <button id="subOk">SUB OK</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+    const logEl = document.getElementById('log');
+    const log = (m, cssClass = '') => {
+        const span = document.createElement('span');
+        span.className = cssClass;
+        span.textContent = m + "\n";
+        logEl.appendChild(span);
+        logEl.scrollTop = logEl.scrollHeight;
+    };
+
+    let client;
+    const subscriptions = new Map(); // destination -> { subscription, timeoutId }
+    const receipts = new Map();      // receiptId  -> destination
+
+    function connect() {
+        const jwt = document.getElementById('jwt').value.trim();
+        const base = document.getElementById('url').value.trim();
+        if (!jwt) { alert('Pega tu JWT'); return; }
+
+        const url = `${base}?access_token=${encodeURIComponent(jwt)}`;
+
+        client = new StompJs.Client({
+            brokerURL: url,
+            reconnectDelay: 0,
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+            connectHeaders: { host: 'localhost' },
+
+            onConnect: () => {
+                log('[CONNECTED]', 'success');
+
+                // Escuchar errores del sistema (notifica suscripciones denegadas)
+                client.subscribe('/user/queue/system/errors', (msg) => {
+                    let payload;
+                    try { payload = JSON.parse(msg.body); } catch (_) { payload = { type: 'SUBSCRIBE_DENIED', reason: msg.body, destination: 'unknown' }; }
+                    const reason = payload.reason || 'Acceso denegado';
+                    const dest   = payload.destination || 'unknown';
+                    log(`[SYSTEM ERROR] ${payload.type || 'SUBSCRIBE_DENIED'}: ${reason} (dest=${dest})`, 'error');
+
+                    // Cancelar timeout asociado a ese destino
+                    const entry = subscriptions.get(dest);
+                    if (entry?.timeoutId) {
+                        clearTimeout(entry.timeoutId);
+                        entry.timeoutId = null;
+                    }
+                });
+            },
+
+            // Limpia timeout cuando llega un RECEIPT del broker
+            onReceipt: (frame) => {
+                const id = frame.headers['receipt-id'];
+                const dest = receipts.get(id);
+                if (dest) {
+                    const entry = subscriptions.get(dest);
+                    if (entry?.timeoutId) {
+                        clearTimeout(entry.timeoutId);
+                        entry.timeoutId = null;
+                        log(`[RECEIPT] Suscripción aceptada (dest=${dest})`, 'success');
+                    }
+                    receipts.delete(id);
+                }
+            },
+
+            onStompError: (frame) => {
+                const msg = frame.headers['message'] || 'Unknown error';
+                log('[STOMP ERROR] ' + msg + ' | ' + frame.body, 'error');
+            },
+            onWebSocketClose: (ev) => { log('[WS CLOSE] code=' + ev.code + ' reason=' + ev.reason, 'warning'); },
+            onWebSocketError: () => { log('[WS ERROR] Connection failed', 'error'); },
+            debug: () => {}
+        });
+
+        client.activate();
+        log('[CONNECTING] ' + url);
+    }
+
+    function disconnect() {
+        if (client) {
+            subscriptions.clear();
+            receipts.clear();
+            client.deactivate();
+            log('[DISCONNECTED]');
+        }
+    }
+
+    function subscribeWithTimeout(destination, onMessage, timeoutMs = 3000) {
+        if (!client || !client.connected) {
+            log('[ERROR] No estás conectado', 'error');
+            return;
+        }
+
+        log('[SUB] ' + destination);
+
+        const receiptId = `rcpt-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+        receipts.set(receiptId, destination);
+
+        const subscription = client.subscribe(destination, (msg) => {
+            log('[✓ MSG] ' + msg.body, 'success');
+            onMessage(msg);
+        }, {
+            id: 'sub-' + Date.now(),
+            receipt: receiptId // ← pide confirmación de SUBSCRIBE
+        });
+
+        const timeoutId = setTimeout(() => {
+            log('[⚠ TIMEOUT] No se recibió confirmación en ' + (timeoutMs/1000) + 's', 'warning');
+            log('[⚠ POSIBLE] Suscripción bloqueada por el servidor (sin permisos)', 'warning');
+        }, timeoutMs);
+
+        subscriptions.set(destination, { subscription, timeoutId });
+        return subscription;
+    }
+
+    function subUserQueue() {
+        subscribeWithTimeout('/user/queue/planning/solicitudes', (msg) => {
+            log('[USER MSG] ' + msg.body, 'success');
+        });
+    }
+
+    function subCompany(cid) {
+        const dest = `/topic/planning/company.${cid}.solicitudes`;
+        subscribeWithTimeout(dest, (msg) => {
+            log('[COMPANY MSG] ' + msg.body, 'success');
+        });
+    }
+
+    document.getElementById('btnConnect').onclick = connect;
+    document.getElementById('btnDisconnect').onclick = disconnect;
+    document.getElementById('subUser').onclick = subUserQueue;
+    document.getElementById('subBad').onclick = () => subCompany(document.getElementById('cid').value.trim());
+    document.getElementById('subOk').onclick  = () => subCompany(document.getElementById('cidok').value.trim());
+</script>
+</body>
+</html>
