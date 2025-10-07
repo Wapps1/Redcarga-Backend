@@ -24,7 +24,7 @@ import java.util.List;
 @SecurityRequirement(name = "iam")
 public class ProviderRoutesController {
 
-    private final ProviderRouteCommandService service;
+    private final ProviderRouteCommandService commandService;
     private final TokenClaims claims;
 
     @PostMapping("/companies/{companyId}/routes")
@@ -51,7 +51,7 @@ public class ProviderRoutesController {
                 req.active()
         );
 
-        Integer id = service.register(cmd, actorAccountId);
+        Integer id = commandService.register(cmd, actorAccountId);
         return ResponseEntity.ok(new RegisterProviderRouteResponse(true, id));
     }
 
@@ -60,7 +60,7 @@ public class ProviderRoutesController {
     }
 
 
-    private final ProviderRoutesQueryService services;
+    private final ProviderRoutesQueryService queryService;
     private final ProvidersMembershipService membership;
 
     @GetMapping("/providers/{companyId}/routes")
@@ -76,7 +76,7 @@ public class ProviderRoutesController {
             throw new AccessDeniedException("not_a_member_of_company");
         }
 
-        var result = services.listRoutes(companyId);
+        var result = queryService.listRoutes(companyId);
         return ResponseEntity.ok(result);
     }
 }
