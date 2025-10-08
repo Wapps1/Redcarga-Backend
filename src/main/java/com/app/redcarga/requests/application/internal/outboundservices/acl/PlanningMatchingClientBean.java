@@ -17,10 +17,30 @@ public class PlanningMatchingClientBean implements PlanningMatchingClient {
                                String oDep, String oProv,
                                String dDep, String dProv,
                                Instant createdAt,
-                               String requesterNameSnapshot) {
+                               String requesterNameSnapshot,
+                               String originDepartmentName,
+                               String originProvinceName,
+                               String destDepartmentName,
+                               String destProvinceName,
+                               Integer totalQuantity) {
+
         var cmd = new PlanningMatchingFacade.PlanningMatchCommand(
-                requestId, oDep, dDep, oProv, dProv, createdAt, requesterNameSnapshot
+                requestId,
+                // Códigos (orden correcto)
+                oDep,
+                dDep,
+                oProv,
+                dProv,
+                createdAt,
+                requesterNameSnapshot,
+                // Nombres y totales
+                originDepartmentName,
+                originProvinceName,
+                destDepartmentName,
+                destProvinceName,
+                totalQuantity
         );
+
         planning.matchAndNotify(cmd);
     }
 }

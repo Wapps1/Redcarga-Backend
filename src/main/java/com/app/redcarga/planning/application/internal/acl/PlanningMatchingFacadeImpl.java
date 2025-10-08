@@ -17,15 +17,23 @@ public class PlanningMatchingFacadeImpl implements PlanningMatchingFacade {
 
     @Override
     public void matchAndNotify(PlanningMatchingFacade.PlanningMatchCommand cmd) {
+        // ORDEN CORRECTO: Dep → Prov, Dep → Prov. Persistimos y notificamos (true).
         matchingService.matchAndNotify(
                 cmd.requestId(),
-                cmd.originProvinceCode(),
                 cmd.originDepartmentCode(),
-                cmd.destProvinceCode(),
+                cmd.originProvinceCode(),
                 cmd.destDepartmentCode(),
+                cmd.destProvinceCode(),
                 defaulted(cmd.createdAt()),
-                false,                       // siempre persistimos y notificamos en flujos reales
-                cmd.requesterName()
+                true,
+                cmd.requesterName(),
+
+                // ===== NUEVO: pasar nombres y totalQuantity =====
+                cmd.originDepartmentName(),
+                cmd.originProvinceName(),
+                cmd.destDepartmentName(),
+                cmd.destProvinceName(),
+                cmd.totalQuantity()
         );
     }
 

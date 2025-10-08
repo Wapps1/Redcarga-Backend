@@ -9,6 +9,7 @@ public record CreateRequestRequest(
         @NotNull @Valid UbigeoSnapshotRequest origin,
         @NotNull @Valid UbigeoSnapshotRequest destination,
         @NotNull Boolean paymentOnDelivery,
+        String request_name,
         @NotNull @Size(min = 1) List<@Valid CreateRequestItemRequest> items
 ) {
     public record UbigeoSnapshotRequest(

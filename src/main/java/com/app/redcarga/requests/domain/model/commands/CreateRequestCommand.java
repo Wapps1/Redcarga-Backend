@@ -10,5 +10,6 @@ public record CreateRequestCommand(
         UbigeoSnapshot origin,
         UbigeoSnapshot destination,
         List<CreateRequestItemCommand> items,
-        Boolean paymentOnDelivery
+        Boolean paymentOnDelivery,
+        String request_name
 ) {}

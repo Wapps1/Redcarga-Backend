@@ -30,11 +30,20 @@ public class NewRequestMatchesReadyHandler {
                     m.routeId(),
                     m.routeTypeId(),
                     e.originDepartmentCode(),
-                    e.originProvinceCode(),
+                    e.originProvinceCode(),  // puede ser null en DD
                     e.destDepartmentCode(),
-                    e.destProvinceCode(),
+                    e.destProvinceCode(),    // puede ser null en DD
                     e.createdAt(),
-                    e.requesterName()
+                    e.requesterName(),
+
+                    // NOMBRES (vienen del evento)
+                    e.originDepartmentName(),
+                    e.originProvinceName(),  // null si DD
+                    e.destDepartmentName(),
+                    e.destProvinceName(),    // null si DD
+
+                    // PREVIEW
+                    e.totalQuantity()
             );
 
             notifications.notifyNewRequest(n);
