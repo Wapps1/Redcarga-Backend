@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,5 +19,10 @@ public class ProviderRoutesQueryServiceImpl implements ProviderRoutesQueryServic
     @Override
     public List<ProviderRouteView> listRoutes(int companyId) {
         return repo.findByCompany(companyId);
+    }
+
+    @Override
+    public Optional<ProviderRouteView> findByCompanyAndId(int companyId, int routeId) {
+        return repo.findByCompanyAndId(companyId, routeId);
     }
 }

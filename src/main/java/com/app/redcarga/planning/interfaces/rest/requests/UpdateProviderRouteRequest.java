@@ -4,8 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-@Schema(description = "Payload to register a provider route (company)")
-public record RegisterProviderRouteRequest(
+@Schema(description = "Payload to update a provider route (company)")
+public record UpdateProviderRouteRequest(
 
         @NotNull
         @Schema(description = "Route type id (planning.route_types catalog). DD=1, PP=2 (seed).",
@@ -33,3 +33,5 @@ public record RegisterProviderRouteRequest(
         @Schema(description = "Active flag. Default: true if null.", example = "true")
         Boolean active
 ) {}
+
+

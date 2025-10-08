@@ -9,5 +9,9 @@ public record ProviderRouteView (
         String originProvinceCode,
         String destDepartmentCode,
         String destProvinceCode,
+        String originDepartmentName,
+        String originProvinceName,
+        String destDepartmentName,
+        String destProvinceName,
         boolean active
 ){}
