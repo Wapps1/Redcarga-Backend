@@ -137,4 +137,45 @@ public class ProviderRoute extends AuditableAbstractAggregateRoot<ProviderRoute>
         if (n == null || n <= 0) throw new IllegalArgumentException(field + "_invalid");
         return n;
     }
+
+    // --- Operaciones de actualización ---
+
+    /**
+     * Actualiza la ruta a shape DD (sin provincias) y revalida invariantes.
+     */
+    public void updateDD(Integer routeTypeId,
+                         String originDepCode,
+                         String destDepCode,
+                         Boolean isActive) {
+        this.routeTypeId = requirePositive(routeTypeId, "route_type_id");
+        this.originDepartment = DepartmentCodePlanning.of(originDepCode);
+        this.destDepartment   = DepartmentCodePlanning.of(destDepCode);
+        this.originProvince   = null;
+        this.destProvince     = null;
+        if (isActive != null) this.active = isActive;
+        assertShape(RouteShape.DD);
+        assertNotSameIfForbidden();
+        // updatedAt es gestionado por Spring Data Auditing
+    }
+
+    /**
+     * Actualiza la ruta a shape PP (con provincias) y revalida invariantes.
+     */
+    public void updatePP(Integer routeTypeId,
+                         String originDepCode,
+                         String destDepCode,
+                         String originProvCode,
+                         String destProvCode,
+                         Boolean isActive) {
+        this.routeTypeId = requirePositive(routeTypeId, "route_type_id");
+        this.originDepartment = DepartmentCodePlanning.of(originDepCode);
+        this.destDepartment   = DepartmentCodePlanning.of(destDepCode);
+        this.originProvince   = ProvinceCodePlanning.of(originProvCode);
+        this.destProvince     = ProvinceCodePlanning.of(destProvCode);
+        if (isActive != null) this.active = isActive;
+        assertShape(RouteShape.PP);
+        assertProvincePrefixes();
+        assertNotSameIfForbidden();
+        // updatedAt es gestionado por Spring Data Auditing
+    }
 }
