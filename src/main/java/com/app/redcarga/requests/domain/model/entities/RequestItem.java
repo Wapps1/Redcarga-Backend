@@ -16,7 +16,7 @@ import java.util.Objects;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(schema = "requests", name = "request_items",
-        indexes = @Index(name="ix_request_items_request_pos", columnList = "request_id, position"))
+        indexes = @Index(name = "ix_request_items_request_pos", columnList = "request_id, position"))
 public class RequestItem {
 
     @Id

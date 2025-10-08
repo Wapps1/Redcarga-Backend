@@ -1,9 +1,10 @@
-package com.app.redcarga.requests.domain.model.commands;
+package com.app.redcarga.requests.application.internal.views;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public record CreateRequestItemCommand(
+public record RequestItemView(
+        Integer itemId,
         String itemName,
         BigDecimal heightCm,
         BigDecimal widthCm,
@@ -13,5 +14,6 @@ public record CreateRequestItemCommand(
         Integer quantity,
         boolean fragile,
         String notes,
-        List<CreateRequestItemImageCommand> images
+        Integer position,
+        List<RequestImageView> images
 ) {}

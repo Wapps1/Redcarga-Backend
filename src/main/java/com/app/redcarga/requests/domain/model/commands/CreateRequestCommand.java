@@ -9,7 +9,6 @@ public record CreateRequestCommand(
         String requesterNameSnapshot,
         UbigeoSnapshot origin,
         UbigeoSnapshot destination,
-        Integer itemsCount,
-        BigDecimal totalWeightKg,
-        List<CreateRequestItemCommand> items
+        List<CreateRequestItemCommand> items,
+        Boolean paymentOnDelivery
 ) {}
