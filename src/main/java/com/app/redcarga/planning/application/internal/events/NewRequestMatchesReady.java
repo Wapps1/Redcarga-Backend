@@ -1,21 +1,29 @@
+// package: com.app.redcarga.planning.application.internal.events
 package com.app.redcarga.planning.application.internal.events;
 
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Evento interno de aplicación emitido cuando termina el matching.
- * Se publica AFTER_COMMIT a través de PlanningEventPublisher.
- */
 public record NewRequestMatchesReady(
         int requestId,
+
+        // Códigos (ORDEN: Dep → Prov, Dep → Prov)
         String originDepartmentCode,
-        String originProvinceCode,  // puede ser null en DD
+        String originProvinceCode,
         String destDepartmentCode,
-        String destProvinceCode,    // puede ser null en DD
+        String destProvinceCode,
+
         Instant createdAt,
         String requesterName,
-        List<CompanyMatch> matches  // una por company
+
+        // NUEVO: datos para preview (pueden ir null por ahora)
+        String originDepartmentName,
+        String originProvinceName,
+        String destDepartmentName,
+        String destProvinceName,
+        Integer totalQuantity,
+
+        List<CompanyMatch> matches
 ) {
     public record CompanyMatch(int companyId, int routeId, int routeTypeId) {}
 }

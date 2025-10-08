@@ -18,7 +18,14 @@ public record NewRequestNotification(
         String destDepartmentCode,
         String destProvinceCode,    // puede ser null en DD
         Instant createdAt,
-        String requesterName
+        String requesterName,
+
+        String originDepartmentName,
+        String originProvinceName,
+        String destDepartmentName,
+        String destProvinceName,
+
+        Integer totalQuantity
 ) {
     public static NewRequestNotification of(String matchKind,
                                             int requestId,
@@ -27,8 +34,14 @@ public record NewRequestNotification(
                                             int routeTypeId,
                                             String oDep, String oProv,
                                             String dDep, String dProv,
-                                            Instant createdAt, String requesterName) {
+                                            Instant createdAt, String requesterName,
+                                            String originDepartmentName,
+                                            String originProvinceName,
+                                            String destDepartmentName,
+                                            String destProvinceName,
+                                            Integer totalQuantity) {
         return new NewRequestNotification("NEW_REQUEST", requestId, companyId, routeId, routeTypeId,
-                matchKind, oDep, oProv, dDep, dProv, createdAt,requesterName);
+                matchKind, oDep, oProv, dDep, dProv, createdAt,requesterName,originDepartmentName,
+                originProvinceName,destDepartmentName, destProvinceName, totalQuantity);
     }
 }

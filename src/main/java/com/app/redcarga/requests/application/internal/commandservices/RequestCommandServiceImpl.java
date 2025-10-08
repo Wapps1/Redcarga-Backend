@@ -97,9 +97,10 @@ public class RequestCommandServiceImpl implements RequestCommandService {
                 cmd.requesterAccountId(),
                 requesterNameSnapshot,
                 cmd.origin(),
-                cmd.destination(),
-                items,
-                cmd.paymentOnDelivery()
+        cmd.destination(),
+        items,
+        cmd.paymentOnDelivery(),
+        cmd.request_name()
         );
 
         // 5) Persistir
@@ -112,14 +113,29 @@ public class RequestCommandServiceImpl implements RequestCommandService {
 
         if (props.isAlsoFireAfterCommit()) {
             afterCommit(() -> {
-                var name = normalizeOrFetchName(null, cmd.requesterAccountId()); // o usa saved.getRequesterNameSnapshot()
+                var name = normalizeOrFetchName(null, cmd.requesterAccountId());
+                var oDepName = cmd.origin().getDepartmentName();
+                var oProvName = cmd.origin().getProvinceName();
+                var dDepName = cmd.destination().getDepartmentName();
+                var dProvName = cmd.destination().getProvinceName();
+
+                int totalQty = saved.getItems().stream()
+                        .mapToInt(i -> i.getQuantity() == null ? 0 : i.getQuantity())
+                        .sum();
+
                 planning.matchAndNotify(
-                        requestId, oDep, oProv, dDep, dProv,
+                        requestId,
+                        oDep, oProv,
+                        dDep, dProv,
                         saved.getCreatedAt().toInstant(),
-                        name == null ? "" : name
+                        (name == null ? "" : name),
+                        oDepName, oProvName,
+                        dDepName, dProvName,
+                        totalQty
                 );
             });
         }
+
 
         return requestId;
     }

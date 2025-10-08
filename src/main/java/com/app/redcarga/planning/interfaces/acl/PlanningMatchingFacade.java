@@ -23,11 +23,21 @@ public interface PlanningMatchingFacade {
     /* ===== Contrato ===== */
     record PlanningMatchCommand(
             int requestId,
+
+            // Códigos
             String originDepartmentCode,
             String destDepartmentCode,
-            String originProvinceCode,
-            String destProvinceCode,
+            String originProvinceCode,   // puede ser null en DD
+            String destProvinceCode,     // puede ser null en DD
+
             Instant createdAt,
-            String requesterName
+            String requesterName,
+
+            // ===== NUEVO: datos para preview completo =====
+            String originDepartmentName,
+            String originProvinceName,   // null en DD
+            String destDepartmentName,
+            String destProvinceName,     // null en DD
+            Integer totalQuantity        // suma quantities de ítems
     ) {}
 }

@@ -8,6 +8,7 @@ public record RequestDetailResponse(
         Integer requestId,
         Integer requesterAccountId,
         String requesterNameSnapshot,
+        String requestName,
         String requesterDocNumber,
         String status, // OPEN/CLOSED/CANCELLED/EXPIRED
         Instant createdAt,

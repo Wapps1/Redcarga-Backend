@@ -67,7 +67,7 @@ public class RequestsController {
 
         var cmd = new CreateRequestCommand(
                 accountId, requesterNameSnapshot,
-                origin, destination, items, body.paymentOnDelivery()
+                origin, destination, items, body.paymentOnDelivery(), body.request_name()
         );
 
         Integer id = commandService.create(cmd);
@@ -107,6 +107,7 @@ public class RequestsController {
                 r.getId(),
                 r.getRequesterAccountId(),
                 r.getRequesterNameSnapshot(),
+                r.getRequestName(),
                 docNumber,                                  // <-- DNI desde ACL
                 r.currentStatus().name(),
                 r.getCreatedAt().toInstant(),

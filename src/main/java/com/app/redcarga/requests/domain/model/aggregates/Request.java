@@ -35,6 +35,10 @@ public class Request extends AuditableAbstractAggregateRoot<Request> {
     @Column(name = "requester_name_snapshot", length = 200)
     private String requesterNameSnapshot;
 
+    // Nuevo campo: nombre de la solicitud (opcional)
+    @Column(name = "request_name", length = 255)
+    private String requestName;
+
     // ---- Estado (FK -> requests.request_statuses)
     @Column(name = "status_id", nullable = false)
     private Integer statusId;
@@ -83,12 +87,13 @@ public class Request extends AuditableAbstractAggregateRoot<Request> {
 
     /** Crea una solicitud en estado OPEN con ≥1 ítem. */
     public static Request createOpen(
-            Integer requesterAccountId,
-            String requesterNameSnapshot,
-            UbigeoSnapshot origin,
-            UbigeoSnapshot destination,
-            List<RequestItem> items,
-            boolean paymentOnDelivery
+        Integer requesterAccountId,
+        String requesterNameSnapshot,
+        UbigeoSnapshot origin,
+        UbigeoSnapshot destination,
+        List<RequestItem> items,
+        boolean paymentOnDelivery,
+        String requestName
     ) {
         Request r = new Request();
         r.requesterAccountId     = requirePositive(requesterAccountId, "requester_account_id_invalid");
@@ -116,6 +121,9 @@ public class Request extends AuditableAbstractAggregateRoot<Request> {
         r.statusId = RequestStatusCode.OPEN.getId();
 
         r.paymentOnDelivery = paymentOnDelivery;
+
+    // asignar requestName (solo sanitizar, puede ser null)
+    r.requestName = sanitizeOptional(requestName, 1, 255);
 
         return r;
     }

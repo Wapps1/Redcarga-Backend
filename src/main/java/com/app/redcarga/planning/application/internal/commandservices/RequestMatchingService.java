@@ -19,21 +19,28 @@ public class RequestMatchingService {
     private final ProviderRouteMatchingGateway matching;
     private final RequestInboxStore inboxStore;
     private final PlanningEventPublisher events;
-    private final Clock clock; // inyecta un Clock bean para testear tiempos
+    private final Clock clock;
 
     /**
-     * Orquesta el matching, opcionalmente persiste en inbox (idempotente)
-     * y emite un evento para notificar por WS AFTER_COMMIT.
+     * Orquesta el matching, persiste en inbox (idempotente)
+     * y emite un evento con todos los datos para notificar por WS AFTER_COMMIT.
      */
     @Transactional
     public void matchAndNotify(int requestId,
-                               String originProvinceCode,
                                String originDepartmentCode,
-                               String destProvinceCode,
+                               String originProvinceCode,
                                String destDepartmentCode,
+                               String destProvinceCode,
                                Instant createdAt,
                                boolean dryRun,
-                               String requesterName) {
+                               String requesterName,
+
+                               // ===== NUEVO: datos para preview =====
+                               String originDepartmentName,
+                               String originProvinceName,
+                               String destDepartmentName,
+                               String destProvinceName,
+                               Integer totalQuantity) {
 
         Instant ts = (createdAt != null) ? createdAt : Instant.now(clock);
 
@@ -48,15 +55,14 @@ public class RequestMatchingService {
         }
 
         if (candidates.isEmpty()) {
-            // Nada que notificar; salimos silenciosamente
-            return;
+            return; // nada que notificar
         }
 
-        // Construye el payload de evento (solo datos mínimos)
         List<NewRequestMatchesReady.CompanyMatch> matches = candidates.stream()
                 .map(c -> new NewRequestMatchesReady.CompanyMatch(c.companyId(), c.routeId(), c.routeTypeId()))
                 .toList();
 
+        // Evento extendido con nombres y totalQuantity
         var evt = new NewRequestMatchesReady(
                 requestId,
                 originDepartmentCode,
@@ -65,10 +71,14 @@ public class RequestMatchingService {
                 destProvinceCode,
                 ts,
                 requesterName,
+                originDepartmentName,
+                originProvinceName,
+                destDepartmentName,
+                destProvinceName,
+                totalQuantity,
                 matches
         );
 
-        // Publica AFTER_COMMIT vía el publisher de infraestructura
-        events.publish(evt);
+        events.publish(evt); // AFTER_COMMIT
     }
 }
