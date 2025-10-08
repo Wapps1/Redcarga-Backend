@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(schema = "requests", name = "request_item_images",
-        indexes = @Index(name="ix_request_item_images_item_pos", columnList = "item_id, image_position"))
+        indexes = @Index(name = "ix_request_item_images_item_pos", columnList = "item_id, image_position"))
 public class RequestItemImage {
 
     @Id
