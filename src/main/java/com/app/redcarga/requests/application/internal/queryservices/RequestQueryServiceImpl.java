@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,5 +25,10 @@ public class RequestQueryServiceImpl implements RequestQueryService {
     @Override
     public boolean existsById(Integer requestId) {
         return requests.existsById(requestId);
+    }
+
+    @Override
+    public List<Request> findAllByRequester(Integer requesterAccountId) {
+        return requests.findAllByRequesterAccountId(requesterAccountId);
     }
 }
