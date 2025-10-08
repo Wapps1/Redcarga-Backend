@@ -14,4 +14,6 @@ public interface ProviderRouteRepository {
     boolean existsDD(Integer companyId, String originDepartmentCode, String destDepartmentCode);
 
     boolean existsPP(Integer companyId, String originProvinceCode, String destProvinceCode);
+
+    void delete(ProviderRoute route);
 }

@@ -15,6 +15,8 @@ import com.app.redcarga.iam.domain.repositories.SystemRoleRepository;
 import com.app.redcarga.shared.domain.model.valueobjects.Email;
 import com.app.redcarga.iam.domain.model.valueobjects.ExternalUid;
 import com.app.redcarga.iam.domain.model.valueobjects.Username;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,8 @@ import java.util.Map;
 
 @Service
 public class RegistrationCommandService {
+
+    private static final Logger log = LoggerFactory.getLogger(RegistrationCommandService.class);
 
     private final AccountRepository accountRepo;
     private final SignupIntentRepository intentRepo;
@@ -59,48 +63,68 @@ public class RegistrationCommandService {
 
     @Transactional
     public RegisterStartResult handle(RegisterStartCommand cmd) {
-        // 1) Validaciones de unicidad (antes de tocar Firebase)
-        if (accountRepo.existsByEmail(cmd.email()))
-            throw new IllegalArgumentException("Email already in use");
-        if (accountRepo.existsByUsername(cmd.username()))
-            throw new IllegalArgumentException("Username already in use");
+        log.info("[REGISTER] Starting registration for email: {}", cmd.email());
+        
+        try {
+            // 1) Validaciones de unicidad (antes de tocar Firebase)
+            log.info("[REGISTER] Step 1: Validating uniqueness");
+            if (accountRepo.existsByEmail(cmd.email()))
+                throw new IllegalArgumentException("Email already in use");
+            if (accountRepo.existsByUsername(cmd.username()))
+                throw new IllegalArgumentException("Username already in use");
+            log.info("[REGISTER] Step 1: Uniqueness validation passed");
 
-        // 2) Crear usuario en Firebase
-        String uid = authGateway.createUser(cmd.email(), cmd.rawPassword());
-        // Limpia la contraseña del record si la guardaste como char[] en el command
-        // Arrays.fill(cmd.rawPassword(), '\0'); // si la tienes como char[]
+            // 2) Crear usuario en Firebase
+            log.info("[REGISTER] Step 2: Creating Firebase user");
+            String uid = authGateway.createUser(cmd.email(), cmd.rawPassword());
+            log.info("[REGISTER] Step 2: Firebase user created with UID: {}", uid);
 
-        // 3) Resolver system_role_id por code
-        Integer systemRoleId = roleRepo.findIdByCode(cmd.roleCode())
-                .orElseThrow(() -> new IllegalArgumentException("Unknown role code: " + cmd.roleCode()));
+            // 3) Resolver system_role_id por code
+            log.info("[REGISTER] Step 3: Resolving role for code: {}", cmd.roleCode());
+            Integer systemRoleId = roleRepo.findIdByCode(cmd.roleCode())
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown role code: " + cmd.roleCode()));
+            log.info("[REGISTER] Step 3: Role resolved to ID: {}", systemRoleId);
 
-        // 4) Crear Account
-        var account = new Account(new ExternalUid(uid), new Email(cmd.email()), new Username(cmd.username()), systemRoleId);
-        accountRepo.save(account);
+            // 4) Crear Account
+            log.info("[REGISTER] Step 4: Creating Account entity");
+            var account = new Account(new ExternalUid(uid), new Email(cmd.email()), new Username(cmd.username()), systemRoleId);
+            accountRepo.save(account);
+            log.info("[REGISTER] Step 4: Account created with ID: {}", account.getId());
 
-        // 5) Claims básicos en Firebase (roles + username)
-        authGateway.setCustomClaims(uid, Map.of(
-                "sys_roles", new String[]{cmd.roleCode().toUpperCase()},
-                "username", cmd.username()
-        ));
+            // 5) Claims básicos en Firebase (roles + username)
+            log.info("[REGISTER] Step 5: Setting Firebase custom claims");
+            authGateway.setCustomClaims(uid, Map.of(
+                    "sys_roles", new String[]{cmd.roleCode().toUpperCase()},
+                    "username", cmd.username()
+            ));
+            log.info("[REGISTER] Step 5: Firebase claims set successfully");
 
-        // 6) Crear/obtener SignupIntent abierto
-        var platform = Platform.valueOf(cmd.platform().toUpperCase());
-        var now = Instant.now(clock);
-        var expiresAt = now.plusSeconds(intentTtlSeconds);
+            // 6) Crear/obtener SignupIntent abierto
+            log.info("[REGISTER] Step 6: Creating SignupIntent");
+            var platform = Platform.valueOf(cmd.platform().toUpperCase());
+            var now = Instant.now(clock);
+            var expiresAt = now.plusSeconds(intentTtlSeconds);
 
-        var intentOpt = intentRepo.findOpenByAccountId(account.getId());
-        var intent = intentOpt.orElseGet(() -> {
-            var si = new SignupIntent(account.getId(), platform, expiresAt, now);
-            return intentRepo.save(si);
-        });
+            var intentOpt = intentRepo.findOpenByAccountId(account.getId());
+            var intent = intentOpt.orElseGet(() -> {
+                var si = new SignupIntent(account.getId(), platform, expiresAt, now);
+                return intentRepo.save(si);
+            });
+            log.info("[REGISTER] Step 6: SignupIntent created with ID: {}", intent.getId());
 
-        String verifyLink = verificationMailAppService.sendVerificationEmail(account.getId());
+            // 7) Enviar email de verificación
+            log.info("[REGISTER] Step 7: Sending verification email");
+            String verifyLink = verificationMailAppService.sendVerificationEmail(account.getId());
+            log.info("[REGISTER] Step 7: Verification email sent successfully");
 
-        return new RegisterStartResult(
-                account.getId(), intent.getId(), account.getEmail(), account.isEmailVerified(), verifyLink
-        );
+            return new RegisterStartResult(
+                    account.getId(), intent.getId(), account.getEmail(), account.isEmailVerified(), verifyLink
+            );
+        } catch (Exception e) {
+            log.error("[REGISTER] Registration failed at step for email: {}", cmd.email(), e);
+            throw e;
         }
+    }
 
     @Transactional
     public void handle(MarkEmailVerifiedCommand cmd) {

@@ -22,21 +22,20 @@ public class IdentityController {
     @SecurityRequirement(name="firebase")
     @PostMapping("/verify-and-create")
     public ResponseEntity<VerifyAndCreateResponse> verifyAndCreate(@Valid @RequestBody VerifyAndCreateRequest req) {
-        // 1) Asegura que el accountId del body pertenece al token
         ownershipGuard.assertOwnershipOrThrow(req.accountId());
 
-        // 2) Ejecuta el comando de dominio
         var cmd = new VerifyAndCreatePersonCommand(
                 req.accountId(),
                 req.fullName(),
                 req.docTypeCode(),
                 req.docNumber(),
-                req.birthDate()
+                req.birthDate(),
+                req.phone(),
+                req.ruc()
         );
 
         var person = personCommands.handle(cmd);
 
-        // 3) Respuesta 200
         return ResponseEntity.ok(new VerifyAndCreateResponse(true, person.getId()));
     }
 }

@@ -4,38 +4,38 @@ import javax.sql.DataSource;
 import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 
 @Configuration
 public class MultiFlywayConfig {
 
-    // === IAM ===
-    @Bean
-    @Order(1) // por si quieres controlar orden entre BCs
+    // === IAM (debe correr primero) ===
+    @Bean(name = "flywayIam")
     public Flyway flywayIam(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
                 .schemas("iam")
-                .table("flyway_history_iam")                 // historial separado
-                .locations("classpath:db/migration/iam")     // carpeta de IAM
-                // .baselineOnMigrate(true)                  // activa solo si ese esquema ya tiene objetos previos
+                .table("flyway_history_iam")
+                .locations("classpath:db/migration/iam")
+                .createSchemas(true)         // <--- crea schema iam si falta
+                .group(true)
+                .cleanDisabled(true)
                 .load();
-
-        flyway.migrate(); // ejecuta migraciones de este BC
+        flyway.migrate();                    // <--- migra IAM aquí
         return flyway;
     }
 
-    @Bean
-    @Order(2) // luego Identity
+    // === Identity (después de IAM) ===
+    @Bean(name = "flywayIdentity")
+    @DependsOn("flywayIam")                  // <--- CLAVE: Identity espera a IAM
     public Flyway flywayIdentity(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
                 .schemas("identity")
                 .table("flyway_history_identity")
                 .locations("classpath:db/migration/identity")
-                //.baselineOnMigrate(true) // si 'identity' ya tenía tablas
-                //.baselineVersion("1")
-                //.validateOnMigrate(true)
+                .createSchemas(true)
                 .group(true)
                 .cleanDisabled(true)
                 .load();
@@ -43,17 +43,16 @@ public class MultiFlywayConfig {
         return flyway;
     }
 
-    @Bean
-    @Order(3) // luego Providers
+    // === Providers (si depende de IAM, que espere a IAM; si depende de Identity, añade ambos) ===
+    @Bean(name = "flywayProviders")
+    @DependsOn("flywayIam")
     public Flyway flywayProviders(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
                 .schemas("providers")
                 .table("flyway_history_providers")
                 .locations("classpath:db/migration/providers")
-                //.baselineOnMigrate(true) // si 'providers' ya tenía tablas
-                //.baselineVersion("1")
-                //.validateOnMigrate(true)
+                .createSchemas(true)
                 .group(true)
                 .cleanDisabled(true)
                 .load();
@@ -61,33 +60,52 @@ public class MultiFlywayConfig {
         return flyway;
     }
 
-    @Bean
-    @Order(4)
+    // === Geo/Admin (ajusta dependencias si necesita IAM/Identity) ===
+    @Bean(name = "flywayAdminGeo")
+    @DependsOn("flywayIam")
     public Flyway flywayAdminGeo(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
                 .schemas("geo")
                 .table("flyway_history_geo")
                 .locations("classpath:db/migration/geo")
+                .createSchemas(true)
                 .group(true)
                 .cleanDisabled(true)
-                // .baselineOnMigrate(true)
                 .load();
         flyway.migrate();
         return flyway;
     }
 
-    @Bean
-    @Order(5)
+    // === Planning (debe esperar a Providers porque tiene FK a providers.companies) ===
+    @Bean(name = "flywayPlanning")
+    @DependsOn({"flywayIam", "flywayProviders"})
     public Flyway flywayPlanning(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
                 .schemas("planning")
                 .table("flyway_history_planning")
                 .locations("classpath:db/migration/planning")
+                .createSchemas(true)
                 .group(true)
                 .cleanDisabled(true)
-                // .baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
+
+    // === Fleet (depende de Providers por company_id) ===
+    @Bean(name = "flywayFleet")
+    @DependsOn({"flywayIam", "flywayProviders"})
+    public Flyway flywayFleet(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("fleet")
+                .table("flyway_history_fleet")
+                .locations("classpath:db/migration/fleet")
+                .createSchemas(true)
+                .group(true)
+                .cleanDisabled(true)
                 .load();
         flyway.migrate();
         return flyway;

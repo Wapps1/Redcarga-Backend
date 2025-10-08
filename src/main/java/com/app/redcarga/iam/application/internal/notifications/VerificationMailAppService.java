@@ -4,6 +4,8 @@ import com.app.redcarga.iam.application.internal.gateways.AuthProviderGateway;
 import com.app.redcarga.iam.application.internal.queryservices.RegistrationQueryService;
 import com.app.redcarga.iam.domain.repositories.SignupIntentRepository;
 import com.app.redcarga.shared.application.gateways.MailGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,8 @@ import java.time.Instant;
 
 @Service
 public class VerificationMailAppService {
+
+    private static final Logger log = LoggerFactory.getLogger(VerificationMailAppService.class);
 
     private final RegistrationQueryService regQuery;
     private final SignupIntentRepository intentRepo;
@@ -42,42 +46,59 @@ public class VerificationMailAppService {
 
     @Transactional
     public String sendVerificationEmail(Integer accountId) {
-        var account = regQuery.requireAccountById(accountId);
-        var intent = regQuery.findOpenSignupIntent(accountId)
-                .orElseThrow(() -> new IllegalStateException("No open signup intent"));
+        log.info("[EMAIL] Starting verification email for accountId: {}", accountId);
+        
+        try {
+            log.info("[EMAIL] Step 1: Getting account and intent");
+            var account = regQuery.requireAccountById(accountId);
+            var intent = regQuery.findOpenSignupIntent(accountId)
+                    .orElseThrow(() -> new IllegalStateException("No open signup intent"));
+            log.info("[EMAIL] Step 1: Account and intent retrieved successfully");
 
-        var now = Instant.now(clock);
-        if (!intent.canResendVerification(now)) {
-            throw new IllegalStateException("Too many requests. Try later.");
+            var now = Instant.now(clock);
+            if (!intent.canResendVerification(now)) {
+                throw new IllegalStateException("Too many requests. Try later.");
+            }
+
+            // Build continueUrl con params
+            log.info("[EMAIL] Step 2: Building continue URL");
+            String url = continueUrl
+                    + (continueUrl.contains("?") ? "&" : "?")
+                    + "email=" + URLEncoder.encode(account.getEmail(), StandardCharsets.UTF_8)
+                    + "&accountId=" + account.getId()
+                    + "&redirect=" + URLEncoder.encode(postVerifyRedirect, StandardCharsets.UTF_8);
+            log.info("[EMAIL] Step 2: Continue URL built: {}", url);
+
+            // Link de Firebase
+            log.info("[EMAIL] Step 3: Generating Firebase verification link");
+            String verificationLink = authGateway.generateEmailVerificationLink(account.getEmail(), url);
+            log.info("[EMAIL] Step 3: Firebase link generated successfully");
+
+            // Asunto
+            String subject = "Confirma tu correo Red Carga";
+
+            // Cuerpo TEXTO PLANO (siempre)
+            String plain = "asdasd";
+
+            // Cuerpo HTML simple (incluye el enlace visible)
+            String html = "asd";
+
+            // Enviar (texto + html)
+            log.info("[EMAIL] Step 4: Sending email via MailGateway");
+            mailGateway.send(account.getEmail(), subject, plain, html);
+            log.info("[EMAIL] Step 4: Email sent successfully");
+
+            // Registrar en dominio
+            log.info("[EMAIL] Step 5: Registering verification sent in domain");
+            intent.registerVerificationSent(now);
+            intentRepo.save(intent);
+            log.info("[EMAIL] Step 5: Domain updated successfully");
+
+            return verificationLink; // útil en dev/logs
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to send verification email for accountId: {}", accountId, e);
+            throw e;
         }
-
-        // Build continueUrl con params
-        String url = continueUrl
-                + (continueUrl.contains("?") ? "&" : "?")
-                + "email=" + URLEncoder.encode(account.getEmail(), StandardCharsets.UTF_8)
-                + "&accountId=" + account.getId()
-                + "&redirect=" + URLEncoder.encode(postVerifyRedirect, StandardCharsets.UTF_8);
-
-        // Link de Firebase
-        String verificationLink = authGateway.generateEmailVerificationLink(account.getEmail(), url);
-
-        // Asunto
-        String subject = "Confirma tu correo Red Carga";
-
-        // Cuerpo TEXTO PLANO (siempre)
-        String plain = "asdasd";
-
-        // Cuerpo HTML simple (incluye el enlace visible)
-        String html = "asd";
-
-        // Enviar (texto + html)
-        mailGateway.send(account.getEmail(), subject, plain, html);
-
-        // Registrar en dominio
-        intent.registerVerificationSent(now);
-        intentRepo.save(intent);
-
-        return verificationLink; // útil en dev/logs
     }
 
 
