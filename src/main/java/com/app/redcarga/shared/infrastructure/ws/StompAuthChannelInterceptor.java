@@ -10,8 +10,11 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 
-import java.util.Map;
-
+/**
+ * Interceptor que valida subscripciones protegidas contra el MembershipVerifierPort.
+ * Cuando deniega, publica un evento interno (WsSubscribeDeniedEvent). Un listener separado
+ * (WsAccessDeniedNotifier) es quien envía el mensaje al usuario para evitar ciclos de beans.
+ */
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final Logger log = LoggerFactory.getLogger(StompAuthChannelInterceptor.class);
 
@@ -36,7 +39,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 var user = acc.getUser();
                 if (user == null || user.getName() == null) {
                     log.warn("[WS] SUBSCRIBE bloqueado: unauthenticated session (dest={})", dest);
-                    notifyAccessDenied(acc, "No autenticado", dest);
+                    notifyAccessDenied(null, "No autenticado", dest);
                     return null; // descarta sin cerrar socket
                 }
 
@@ -45,34 +48,36 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                     accountId = Integer.parseInt(user.getName());
                 } catch (NumberFormatException e) {
                     log.warn("[WS] SUBSCRIBE bloqueado: invalid principal (dest={})", dest);
-                    notifyAccessDenied(acc, "Principal inválido", dest);
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
                     return null;
                 }
 
                 final boolean allowed;
+                long t0 = System.currentTimeMillis();
                 try {
                     allowed = membership.isActiveMember(companyId, accountId);
                 } catch (Exception e) {
                     log.warn("[WS] SUBSCRIBE bloqueado: membership check failed (dest={}, ex={})", dest, e.toString());
-                    notifyAccessDenied(acc, "Error al verificar membresía", dest);
+                    notifyAccessDenied(user.getName(), "Error al verificar membresía", dest);
                     return null;
                 }
+                long ms = System.currentTimeMillis() - t0;
+                log.info("[WS-Auth] cmp={} acc={} allowed={} took={}ms dest={}", companyId, accountId, allowed, ms, dest);
 
                 if (!allowed) {
                     log.warn("[WS] SUBSCRIBE bloqueado: not member (companyId={}, accountId={})", companyId, accountId);
-                    notifyAccessDenied(acc, "No eres miembro de la compañía #" + companyId, dest);
-                    return null; // bloquear suscripción, el cliente verá timeout salvo que escuche /user/queue/system/errors
+                    notifyAccessDenied(user.getName(), "No eres miembro de la compañía #" + companyId, dest);
+                    return null; // bloquear suscripción, el cliente verá el mensaje en /user/queue/system/errors
                 }
             }
         }
         return message; // dejar pasar los demás
     }
 
-    private void notifyAccessDenied(StompHeaderAccessor accessor, String reason, String destination) {
-        if (accessor.getUser() == null || accessor.getUser().getName() == null) return;
-
+    private void notifyAccessDenied(String username, String reason, String destination) {
+        if (username == null) return;
         events.publishEvent(new WsSubscribeDeniedEvent(
-                accessor.getUser().getName(),
+                username,
                 reason,
                 destination == null ? "unknown" : destination,
                 System.currentTimeMillis()
