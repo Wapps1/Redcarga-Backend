@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -39,13 +38,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // === Solo dependencias “seguras” (no canales del broker) ===
     private final JwtDecoder jwtDecoder;
     private final MembershipVerifierPort membershipVerifierPort;
-    @Autowired
-    private ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public WebSocketConfig(@Qualifier("iamJwtDecoder") JwtDecoder jwtDecoder,
-                           MembershipVerifierPort membershipVerifierPort) {
+                           MembershipVerifierPort membershipVerifierPort,
+                           ApplicationEventPublisher applicationEventPublisher) {
         this.jwtDecoder = jwtDecoder;
         this.membershipVerifierPort = membershipVerifierPort;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
@@ -59,9 +59,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic", "/queue")
-                .setHeartbeatValue(new long[]{heartbeatServerMs, heartbeatClientMs})
-                .setTaskScheduler(heartbeatScheduler());
+    config.enableSimpleBroker("/topic", "/queue")
+        .setHeartbeatValue(new long[]{heartbeatServerMs, heartbeatClientMs})
+        .setTaskScheduler(wsMessageBrokerTaskScheduler());
         config.setUserDestinationPrefix("/user");
         config.setApplicationDestinationPrefixes("/app");
     }
@@ -76,15 +76,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // Registra el interceptor creando la instancia aquí (sin @Bean y sin canales)
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
+        // Interceptor sin SimpMessagingTemplate para evitar ciclo de beans; listener separado enviará feedback
         registration.interceptors(new StompAuthChannelInterceptor(membershipVerifierPort, applicationEventPublisher));
     }
 
-    // === Beans auxiliares
-    @Bean
-    public TaskScheduler heartbeatScheduler() {
-        var ts = new ThreadPoolTaskScheduler();
+    // Exponer bean propio para el broker para evitar nombre que colisione con Spring
+    @Bean(name = "wsMessageBrokerTaskScheduler")
+    public ThreadPoolTaskScheduler wsMessageBrokerTaskScheduler() {
+        ThreadPoolTaskScheduler ts = new ThreadPoolTaskScheduler();
         ts.setPoolSize(1);
-        ts.setThreadNamePrefix("ws-heartbeat-");
+        ts.setThreadNamePrefix("wss-broker-scheduler-");
         ts.initialize();
         return ts;
     }
