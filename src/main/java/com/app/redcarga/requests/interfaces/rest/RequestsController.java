@@ -23,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.app.redcarga.requests.interfaces.rest.responses.RequestListItemResponse;
 
 import java.util.Comparator;
 import java.util.List;
@@ -162,4 +163,43 @@ public class RequestsController {
             return vo.toString();
         }
     }
+
+    @Operation(summary = "Get the list of requests (CLIENT)")
+    @GetMapping
+    public ResponseEntity<List<RequestListItemResponse>> listMine() {
+        int accountId = claims.accountIdClaim()
+                .orElseThrow(() -> new AccessDeniedException("account_id_missing"));
+
+        List<RequestListItemResponse> items = queryService.findAllByRequester(accountId).stream()
+                .sorted(Comparator.comparing(Request::getCreatedAt).reversed())
+                .map(this::toListItemResponse)
+                .toList();
+
+        return ResponseEntity.ok(items);
+    }
+
+    private RequestListItemResponse toListItemResponse(Request req) {
+        return new RequestListItemResponse(
+                req.getId(),
+                req.getRequestName(),
+                req.currentStatus().name(),
+                req.getCreatedAt() != null ? req.getCreatedAt().toInstant() : null,
+                req.getUpdatedAt() != null ? req.getUpdatedAt().toInstant() : null,
+                req.getClosedAt()  != null ? req.getClosedAt().toInstant()  : null,
+                toLocationResponse(req.getOrigin()),
+                toLocationResponse(req.getDestination()),
+                req.getItemsCount(),
+                req.getTotalWeightKg(),
+                req.isPaymentOnDelivery()
+        );
+    }
+
+    private static RequestListItemResponse.LocationResponse toLocationResponse(UbigeoSnapshot u) {
+        return new RequestListItemResponse.LocationResponse(
+                val(u.getDepartmentCode()), u.getDepartmentName(),
+                val(u.getProvinceCode()),   u.getProvinceName(),
+                val(u.getDistrictText())
+        );
+    }
+
 }
