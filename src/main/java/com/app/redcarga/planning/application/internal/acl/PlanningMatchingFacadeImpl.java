@@ -25,7 +25,7 @@ public class PlanningMatchingFacadeImpl implements PlanningMatchingFacade {
                 cmd.destDepartmentCode(),
                 cmd.destProvinceCode(),
                 defaulted(cmd.createdAt()),
-                true,
+                false,
                 cmd.requesterName(),
 
                 // ===== NUEVO: pasar nombres y totalQuantity =====

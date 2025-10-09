@@ -50,7 +50,17 @@ public class RequestMatchingService {
 
         if (!dryRun) {
             for (var c : candidates) {
-                inboxStore.insertIfAbsent(requestId, c.companyId(), c.routeId(), c.routeTypeId(), ts);
+                inboxStore.insertIfAbsent(requestId,
+                        c.companyId(),
+                        c.routeId(),
+                        c.routeTypeId(),
+                        ts,
+                        requesterName,
+                        originDepartmentName,
+                        originProvinceName,
+                        destDepartmentName,
+                        destProvinceName,
+                        totalQuantity);
             }
         }
 
