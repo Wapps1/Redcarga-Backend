@@ -13,7 +13,13 @@ public interface RequestInboxStore {
                         int companyId,
                         int routeId,
                         int routeTypeId,
-                        Instant createdAt);
+                        Instant createdAt,
+                        String requesterName,
+                        String originDepartmentName,
+                        String originProvinceName,
+                        String destDepartmentName,
+                        String destProvinceName,
+                        Integer totalQuantity);
 
     List<Integer> closeAllForRequest(int requestId);
 }

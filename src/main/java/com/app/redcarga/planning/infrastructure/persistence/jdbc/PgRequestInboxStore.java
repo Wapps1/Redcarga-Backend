@@ -21,29 +21,43 @@ public class PgRequestInboxStore implements RequestInboxStore {
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String SQL_INSERT = """
-        insert into planning.request_inbox
-          (request_id, company_id, matched_route_id, route_type_id, status, created_at)
-        values
-          (:request_id, :company_id, :route_id, :route_type_id, 'OPEN', :created_at)
-        on conflict (request_id, company_id) do nothing
-        """;
+        private static final String SQL_INSERT = """
+                insert into planning.request_inbox
+                    (request_id, company_id, matched_route_id, route_type_id, status, created_at,
+                     requester_name, origin_department_name, origin_province_name, dest_department_name, dest_province_name, total_quantity)
+                values
+                    (:request_id, :company_id, :route_id, :route_type_id, 'OPEN', :created_at,
+                     :requester_name, :origin_department_name, :origin_province_name, :dest_department_name, :dest_province_name, :total_quantity)
+                on conflict (request_id, company_id) do nothing
+                """;
 
     @Override
     public void insertIfAbsent(int requestId,
-                               int companyId,
-                               int routeId,
-                               int routeTypeId,
-                               Instant createdAt) {
+                   int companyId,
+                   int routeId,
+                   int routeTypeId,
+                   Instant createdAt,
+                   String requesterName,
+                   String originDepartmentName,
+                   String originProvinceName,
+                   String destDepartmentName,
+                   String destProvinceName,
+                   Integer totalQuantity) {
 
-        var params = new MapSqlParameterSource()
-                .addValue("request_id", requestId)
-                .addValue("company_id", companyId)
-                .addValue("route_id", routeId)
-                .addValue("route_type_id", routeTypeId)
-                .addValue("created_at", Timestamp.from(createdAt));
+    var params = new MapSqlParameterSource()
+        .addValue("request_id", requestId)
+        .addValue("company_id", companyId)
+        .addValue("route_id", routeId)
+        .addValue("route_type_id", routeTypeId)
+        .addValue("created_at", Timestamp.from(createdAt))
+        .addValue("requester_name", requesterName)
+        .addValue("origin_department_name", originDepartmentName)
+        .addValue("origin_province_name", originProvinceName)
+        .addValue("dest_department_name", destDepartmentName)
+        .addValue("dest_province_name", destProvinceName)
+        .addValue("total_quantity", totalQuantity);
 
-        jdbc.update(SQL_INSERT, params);
+    jdbc.update(SQL_INSERT, params);
     }
 
     @Override
