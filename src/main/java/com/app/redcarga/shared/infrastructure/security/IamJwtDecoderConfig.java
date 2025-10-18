@@ -38,7 +38,18 @@ public class IamJwtDecoderConfig {
 
     private RSAPublicKey readPublicKey(Resource pem) {
         try {
-            String text = new String(pem.getInputStream().readAllBytes());
+            String text;
+            String envB64 = System.getenv("IAM_PUBLIC_PEM_B64");
+
+            if (envB64 != null && !envB64.isEmpty()) {
+                // Azure: lee desde variable
+                byte[] decoded = Base64.getDecoder().decode(envB64);
+                text = new String(decoded);
+            } else {
+                // Local: lee el archivo
+                text = new String(pem.getInputStream().readAllBytes());
+            }
+
             String base64 = text.replace("-----BEGIN PUBLIC KEY-----","")
                     .replace("-----END PUBLIC KEY-----","")
                     .replaceAll("\\s","");
@@ -49,4 +60,5 @@ public class IamJwtDecoderConfig {
             throw new IllegalStateException("No pude leer la public key IAM", e);
         }
     }
+
 }

@@ -3,7 +3,7 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-
+redcargabackend
 ### STS ###
 .apt_generated
 .classpath
@@ -37,4 +37,4 @@ build/
 *.pem
 *.key
 *.p12
-src/main/resources/firebase/firebase-admin.json
+.secrets/firebase/firebase-admin.json

@@ -22,6 +22,7 @@ public class MultiFlywayConfig {
                 .group(true)
                 .cleanDisabled(true)
                 .load();
+        // flyway.repair();
         flyway.migrate();                    // <--- migra IAM aquí
         return flyway;
     }
@@ -121,6 +122,7 @@ public class MultiFlywayConfig {
                 .locations("classpath:db/migration/requests")
                 .group(true)
                 .cleanDisabled(true)
+                .createSchemas(true)
                 // .baselineOnMigrate(true)
                 .load();
         flyway.migrate();
