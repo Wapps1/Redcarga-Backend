@@ -37,4 +37,4 @@ build/
 *.pem
 *.key
 *.p12
-src/main/resources/firebase/firebase-admin.json
+.secrets/firebase/firebase-admin.json

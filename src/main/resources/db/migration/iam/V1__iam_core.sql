@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS iam.accounts (
     account_id       SERIAL PRIMARY KEY,
     system_role_id   INT NOT NULL REFERENCES iam.system_roles(system_role_id),
     external_uid     VARCHAR(128) NOT NULL UNIQUE,
-    email            CITEXT NOT NULL UNIQUE,
+    email            VARCHAR(40) NOT NULL UNIQUE,
     email_verified   BOOLEAN NOT NULL DEFAULT FALSE,
-    username         CITEXT NOT NULL UNIQUE,
+    username         VARCHAR(40) NOT NULL UNIQUE,
     status           VARCHAR(20) NOT NULL CHECK (status IN ('ACTIVE','PENDING','BANNED')),
     created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()

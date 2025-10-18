@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.Base64;
 
 @Configuration
 public class FirebaseAdminConfig {
@@ -22,18 +24,25 @@ public class FirebaseAdminConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws Exception {
-        try (InputStream in = credentialsFile.getInputStream()) {
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(in))
-                    .setProjectId(projectId)
-                    .build();
+        InputStream in;
 
-            // Evita inicializar dos veces
-            if (FirebaseApp.getApps().isEmpty()) {
-                return FirebaseApp.initializeApp(options);
-            }
-            return FirebaseApp.getInstance();
+        String firebaseB64 = System.getenv("FIREBASE_ADMIN_B64");
+        if (firebaseB64 != null && !firebaseB64.isEmpty()) {
+            byte[] decoded = Base64.getDecoder().decode(firebaseB64);
+            in = new ByteArrayInputStream(decoded);
+        } else {
+            in = credentialsFile.getInputStream();
         }
+
+        FirebaseOptions options = FirebaseOptions.builder()
+                .setCredentials(GoogleCredentials.fromStream(in))
+                .setProjectId(projectId)
+                .build();
+
+        if (FirebaseApp.getApps().isEmpty()) {
+            return FirebaseApp.initializeApp(options);
+        }
+        return FirebaseApp.getInstance();
     }
 
     @Bean

@@ -1,0 +1,31 @@
+services:
+  redcarga:
+    build: .
+    image: redcarga:latest
+    container_name: redcarga
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: "prod"
+
+      APP_IAM_VERIFICATION_CONTINUE_URL: "http://localhost:8080/iam/email-verification/continue"
+
+      # === Firebase ===
+      APP_FIREBASE_PROJECT_ID: "redcarga-ca1e1"
+      APP_FIREBASE_CREDENTIALS_FILE: "file:/run/secrets/firebase/firebase-admin.json"
+      GOOGLE_APPLICATION_CREDENTIALS: "/run/secrets/firebase/firebase-admin.json"
+
+      # === DB local (tu PG corre en 5433) ===
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://host.docker.internal:5433/redcarga?currentSchema=public,iam,identity,providers,planning,fleet,requests,geo"
+      SPRING_DATASOURCE_USERNAME: "redcarga"
+      SPRING_DATASOURCE_PASSWORD: "pass"
+
+      MEDIA_CLOUDINARY_CLOUD_NAME: "dgrsgm8ok"
+      MEDIA_CLOUDINARY_API_KEY: "613941565279744"
+      MEDIA_CLOUDINARY_API_SECRET: "ZTYd7bmAHzkVDbL7dkzxFKfDCy8"
+
+
+    volumes:
+      - ./.secrets/firebase/firebase-admin.json:/run/secrets/firebase/firebase-admin.json:ro
+      - ./.secrets/iam/dev/iam_private.pem:/run/secrets/iam/iam_private.pem:ro
+      - ./.secrets/iam/dev/iam_public.pem:/run/secrets/iam/iam_public.pem:ro
