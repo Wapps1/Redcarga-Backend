@@ -80,7 +80,8 @@ public class DealsExceptionHandler {
         String key = ex.getMessage();
         return switch (key) {
             case "account_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
-            case "invalid_provider_role", "company_not_member" -> error(key, HttpStatus.FORBIDDEN, null);
+            case "invalid_provider_role", "company_not_member", "not_member_of_company" -> error(key, HttpStatus.FORBIDDEN, null);
+            case "quote_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
             default -> error(key != null ? key : "domain_error", HttpStatus.BAD_REQUEST, null);
         };
     }

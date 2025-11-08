@@ -1,7 +1,9 @@
 package com.app.redcarga.deals.domain.model.aggregates;
 
+import com.app.redcarga.deals.domain.model.entities.QuoteItem;
 import com.app.redcarga.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import com.app.redcarga.deals.domain.model.commands.CreateQuoteCommand;
+import com.app.redcarga.shared.domain.exceptions.DomainException;
 import com.app.redcarga.deals.domain.model.valueobjects.Currency;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,10 +22,11 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
     @Column(name = "request_id", nullable = false)
     private Integer requestId;
 
-    @Column(name = "provider_id", nullable = false)
-    private Integer providerId;
+    @Column(name = "company_id", nullable = false)
+    private Integer companyId;
 
-    @Column(name = "created_by_account_id", nullable = false)
+    // Align column name with DDL (created_by)
+    @Column(name = "created_by", nullable = false)
     private Integer createdByAccountId;
 
     @Enumerated(EnumType.STRING)
@@ -40,21 +43,65 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
     @Column(name = "version", nullable = false)
     private Integer version;
 
+    @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<QuoteItem> items = new java.util.ArrayList<>();
+
     // Factory
     public static Quote create(CreateQuoteCommand cmd, Integer creatorAccountId) {
-        if (cmd == null) throw new IllegalArgumentException("create_quote_command_required");
-        if (creatorAccountId == null) throw new IllegalArgumentException("creator_account_required");
-        if (cmd.requestId() == null || cmd.requestId() <= 0) throw new IllegalArgumentException("requestId_invalid");
-        if (cmd.providerId() == null || cmd.providerId() <= 0) throw new IllegalArgumentException("providerId_invalid");
-        if (cmd.totalAmount() == null || cmd.totalAmount().compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("totalAmount_invalid");
+    if (cmd == null) throw new DomainException("create_quote_command_required");
+    if (creatorAccountId == null) throw new DomainException("creator_account_required");
+    if (cmd.requestId() == null || cmd.requestId() <= 0) throw new DomainException("requestId_invalid");
+    if (cmd.companyId() == null || cmd.companyId() <= 0) throw new DomainException("companyId_invalid");
+    if (cmd.totalAmount() == null || cmd.totalAmount().compareTo(BigDecimal.ZERO) <= 0) throw new DomainException("totalAmount_invalid");
 
         Quote q = new Quote();
         q.requestId = cmd.requestId();
-        q.providerId = cmd.providerId();
+        q.companyId = cmd.companyId();
         q.createdByAccountId = creatorAccountId;
         q.totalAmount = cmd.totalAmount();
         q.currency = cmd.currency() == null ? Currency.PEN : cmd.currency();
         q.stateCode = "PENDIENTE";
+        // build items if provided
+        if (cmd.items() != null) {
+            for (var it : cmd.items()) {
+                q.addItem(it.requestItemId(), it.qty());
+            }
+        }
         return q;
+    }
+
+    // Aggregate operations for items
+    public void addItem(Integer requestItemId, java.math.BigDecimal qty) {
+        ensureEditable();
+        if (requestItemId == null || requestItemId <= 0) throw new DomainException("requestItemId_invalid");
+        if (qty == null || qty.compareTo(java.math.BigDecimal.ZERO) <= 0) throw new DomainException("qty_invalid");
+        boolean exists = items.stream().anyMatch(i -> i.getRequestItemId().equals(requestItemId));
+        if (exists) throw new DomainException("quote_item_duplicate");
+        var item = com.app.redcarga.deals.domain.model.entities.QuoteItem.createNew(this, requestItemId, qty);
+        this.items.add(item);
+    }
+
+    public void updateItemQty(Integer requestItemId, java.math.BigDecimal newQty) {
+        ensureEditable();
+        if (newQty == null || newQty.compareTo(java.math.BigDecimal.ZERO) <= 0) throw new DomainException("qty_invalid");
+        var item = items.stream().filter(i -> i.getRequestItemId().equals(requestItemId)).findFirst()
+                .orElseThrow(() -> new DomainException("quote_item_not_found"));
+        item.updateQty(newQty);
+    }
+
+    public void removeItem(Integer requestItemId) {
+        ensureEditable();
+        var it = items.stream().filter(i -> i.getRequestItemId().equals(requestItemId)).findFirst()
+                .orElseThrow(() -> new DomainException("quote_item_not_found"));
+        items.remove(it);
+    }
+
+    private void ensureEditable() {
+        if (this.stateCode == null) throw new DomainException("quote_state_not_editable");
+        // Allowed: PENDIENTE, TRATO, EN_ESPERA
+        String s = this.stateCode;
+        if (!("PENDIENTE".equals(s) || "TRATO".equals(s) || "EN_ESPERA".equals(s))) {
+            throw new DomainException("quote_state_not_editable");
+        }
     }
 }

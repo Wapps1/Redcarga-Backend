@@ -1,7 +1,7 @@
 package com.app.redcarga.providers.infrastructure.persistence.jdbc;
 
 import com.app.redcarga.providers.application.internal.views.CompanyView;
-import com.app.redcarga.providers.domain.queries.CompanyQueryRepository;
+import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;

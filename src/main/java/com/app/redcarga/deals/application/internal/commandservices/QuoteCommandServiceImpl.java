@@ -8,6 +8,7 @@ import com.app.redcarga.deals.application.internal.outboundservices.acl.Provider
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.app.redcarga.shared.domain.exceptions.DomainException;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +20,37 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     @Override
     @Transactional
     public Integer create(CreateQuoteCommand cmd, Integer creatorAccountId) {
-        // Validación básica adicional a la del aggregate (ej. membership provider)
-        // Asumimos que providerId en la quote se refiere a companyId (si fuera distinto, ajustar naming)
-        if (!providersMembershipClient.isMemberOfCompany(cmd.providerId(), creatorAccountId)) {
-            throw new IllegalStateException("not_member_of_company");
+        // Validación: el creador debe pertenecer a la compañía
+        if (!providersMembershipClient.isMemberOfCompany(cmd.companyId(), creatorAccountId)) {
+            throw new DomainException("not_member_of_company");
         }
         Quote quote = Quote.create(cmd, creatorAccountId);
         quoteRepository.save(quote);
         return quote.getId();
+    }
+
+    @Override
+    @Transactional
+    public void updateItemQty(Integer quoteId, Integer requestItemId, java.math.BigDecimal qty, Integer actorAccountId) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new DomainException("quote_not_found"));
+        // membership check: actor must belong to the quote's company
+        if (!providersMembershipClient.isMemberOfCompany(quote.getCompanyId(), actorAccountId)) {
+            throw new DomainException("not_member_of_company");
+        }
+        quote.updateItemQty(requestItemId, qty);
+        quoteRepository.save(quote);
+    }
+
+    @Override
+    @Transactional
+    public void removeItem(Integer quoteId, Integer requestItemId, Integer actorAccountId) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new DomainException("quote_not_found"));
+        if (!providersMembershipClient.isMemberOfCompany(quote.getCompanyId(), actorAccountId)) {
+            throw new DomainException("not_member_of_company");
+        }
+        quote.removeItem(requestItemId);
+        quoteRepository.save(quote);
     }
 }

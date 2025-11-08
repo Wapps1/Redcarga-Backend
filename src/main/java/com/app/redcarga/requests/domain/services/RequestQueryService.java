@@ -9,4 +9,5 @@ public interface RequestQueryService {
     Optional<Request> findById(Integer requestId);
     boolean existsById(Integer requestId);
     List<Request> findAllByRequester(Integer requesterAccountId);
+    public boolean isRequester(Integer requestId, Integer accountId);
 }

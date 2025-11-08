@@ -1,10 +1,10 @@
 package com.app.redcarga.providers.interfaces.rest;
 
 import com.app.redcarga.providers.application.internal.outboundservices.acl.IamAccountProviderService;
-import com.app.redcarga.providers.application.internal.queryservices.CompanyQueryService;
+import com.app.redcarga.providers.domain.services.CompanyQueryService;
 import com.app.redcarga.providers.application.internal.views.CompanyView;
 import com.app.redcarga.providers.domain.model.commands.VerifyAndRegisterCompanyCommand;
-import com.app.redcarga.providers.domain.queries.CompanyQueryRepository;
+import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
 import com.app.redcarga.providers.domain.services.CompanyCommandService;
 import com.app.redcarga.providers.interfaces.rest.requests.VerifyAndRegisterCompanyRequest;
 import com.app.redcarga.providers.interfaces.rest.responses.VerifyAndRegisterCompanyResponse;

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface QuoteRepository {
     Quote save(Quote quote);
+    Optional<Quote> findById(Integer id);
     List<Quote> findByRequestIdAndStateCode(Integer requestId, String stateCode);
     List<Quote> findByRequestId(Integer requestId);
 }
