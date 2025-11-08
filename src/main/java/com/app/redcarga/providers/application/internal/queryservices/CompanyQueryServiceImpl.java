@@ -1,7 +1,8 @@
 package com.app.redcarga.providers.application.internal.queryservices;
 
 import com.app.redcarga.providers.application.internal.views.CompanyView;
-import com.app.redcarga.providers.domain.queries.CompanyQueryRepository;
+import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
+import com.app.redcarga.providers.domain.services.CompanyQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

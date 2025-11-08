@@ -19,11 +19,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final Logger log = LoggerFactory.getLogger(StompAuthChannelInterceptor.class);
 
     private final MembershipVerifierPort membership;
+    private final com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort requestOwnershipVerifier;
     private final ApplicationEventPublisher events;
 
     public StompAuthChannelInterceptor(MembershipVerifierPort membership,
+                                       com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort requestOwnershipVerifier,
                                        ApplicationEventPublisher events) {
         this.membership = membership;
+        this.requestOwnershipVerifier = requestOwnershipVerifier;
         this.events = events;
     }
 
@@ -68,6 +71,42 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                     log.warn("[WS] SUBSCRIBE bloqueado: not member (companyId={}, accountId={})", companyId, accountId);
                     notifyAccessDenied(user.getName(), "No eres miembro de la compañía #" + companyId, dest);
                     return null; // bloquear suscripción, el cliente verá el mensaje en /user/queue/system/errors
+                }
+            }
+
+            // Validate subscriber for requests account quotes topic
+            Integer accountIdFromRequestTopic = DestinationPatterns.tryExtractAccountIdFromRequestsQuotes(dest);
+            if (accountIdFromRequestTopic != null) {
+                var user = acc.getUser();
+                if (user == null || user.getName() == null) {
+                    notifyAccessDenied(null, "No autenticado", dest);
+                    return null;
+                }
+                final int accountId;
+                try {
+                    accountId = Integer.parseInt(user.getName());
+                } catch (NumberFormatException e) {
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
+                    return null;
+                }
+                if (accountId != accountIdFromRequestTopic) {
+                    notifyAccessDenied(user.getName(), "Cuenta no coincide con destino", dest);
+                    return null;
+                }
+                // Optional requestId header to verify ownership of a specific request
+                String reqHdr = acc.getFirstNativeHeader("requestId");
+                if (reqHdr != null && !reqHdr.isBlank() && requestOwnershipVerifier != null) {
+                    try {
+                        Integer requestId = Integer.parseInt(reqHdr);
+                        boolean isRequester = requestOwnershipVerifier.isRequester(requestId, accountId);
+                        if (!isRequester) {
+                            notifyAccessDenied(user.getName(), "No eres el requester de la requestId=" + requestId, dest);
+                            return null;
+                        }
+                    } catch (Exception ex) {
+                        notifyAccessDenied(user.getName(), "Error al verificar request ownership", dest);
+                        return null;
+                    }
                 }
             }
         }

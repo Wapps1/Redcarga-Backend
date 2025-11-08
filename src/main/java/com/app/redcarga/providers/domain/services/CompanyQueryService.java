@@ -1,4 +1,4 @@
-package com.app.redcarga.providers.application.internal.queryservices;
+package com.app.redcarga.providers.domain.services;
 
 import com.app.redcarga.providers.application.internal.views.CompanyView;
 import java.util.Optional;

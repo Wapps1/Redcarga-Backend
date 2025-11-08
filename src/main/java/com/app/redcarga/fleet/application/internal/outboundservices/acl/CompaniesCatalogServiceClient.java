@@ -20,5 +20,3 @@ public class CompaniesCatalogServiceClient implements CompaniesCatalogService {
         return companies.isActive(companyId);
     }
 }
-
-

@@ -112,8 +112,7 @@ public class MultiFlywayConfig {
         return flyway;
     }
 
-    @Bean
-    @Order(6)
+    @Bean(name = "flywayRequests")
     public Flyway flywayRequests(DataSource ds) {
         Flyway flyway = Flyway.configure()
                 .dataSource(ds)
@@ -124,6 +123,23 @@ public class MultiFlywayConfig {
                 .cleanDisabled(true)
                 .createSchemas(true)
                 // .baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
+
+    @Bean
+    @DependsOn("flywayRequests")
+    public Flyway flywayDeals(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("deals")
+                .table("flyway_history_deals")
+                .locations("classpath:db/migration/deals")
+                .group(true)
+                .cleanDisabled(true)
+                .createSchemas(true)
+                //.baselineOnMigrate(true)
                 .load();
         flyway.migrate();
         return flyway;

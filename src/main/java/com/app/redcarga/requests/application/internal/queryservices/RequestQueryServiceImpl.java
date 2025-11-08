@@ -31,4 +31,12 @@ public class RequestQueryServiceImpl implements RequestQueryService {
     public List<Request> findAllByRequester(Integer requesterAccountId) {
         return requests.findAllByRequesterAccountId(requesterAccountId);
     }
+
+    @Override
+    public boolean isRequester(Integer requestId, Integer accountId) {
+        if (requestId == null || accountId == null) return false;
+        return requests.findById(requestId)
+                .map(r -> accountId.equals(r.getRequesterAccountId()))
+                .orElse(false);
+    }
 }
