@@ -1,6 +1,7 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
+import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,13 +39,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     // === Solo dependencias “seguras” (no canales del broker) ===
     private final JwtDecoder jwtDecoder;
     private final MembershipVerifierPort membershipVerifierPort;
+    private final RequestOwnershipVerifierPort requestOwnershipVerifierPort;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public WebSocketConfig(@Qualifier("iamJwtDecoder") JwtDecoder jwtDecoder,
                            MembershipVerifierPort membershipVerifierPort,
+                           RequestOwnershipVerifierPort requestOwnershipVerifierPort,
                            ApplicationEventPublisher applicationEventPublisher) {
         this.jwtDecoder = jwtDecoder;
         this.membershipVerifierPort = membershipVerifierPort;
+        this.requestOwnershipVerifierPort = requestOwnershipVerifierPort;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -77,7 +81,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         // Interceptor sin SimpMessagingTemplate para evitar ciclo de beans; listener separado enviará feedback
-        registration.interceptors(new StompAuthChannelInterceptor(membershipVerifierPort, applicationEventPublisher));
+        registration.interceptors(new StompAuthChannelInterceptor(membershipVerifierPort, requestOwnershipVerifierPort, applicationEventPublisher));
     }
 
     // Exponer bean propio para el broker para evitar nombre que colisione con Spring

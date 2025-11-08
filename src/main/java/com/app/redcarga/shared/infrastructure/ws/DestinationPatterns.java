@@ -11,9 +11,19 @@ public final class DestinationPatterns {
     public static final Pattern COMPANY_SOLICITUDES =
             Pattern.compile("^/topic/planning/company\\.(\\d+)\\.solicitudes$");
 
+    /** /topic/requests.account.{accountId}.quotes */
+    public static final Pattern REQUESTS_ACCOUNT_QUOTES =
+            Pattern.compile("^/topic/requests\\.account\\.(\\d+)\\.quotes$");
+
     public static Integer tryExtractCompanyIdFromCompanySolicitudes(String destination) {
         if (destination == null) return null;
         Matcher m = COMPANY_SOLICITUDES.matcher(destination);
+        return m.matches() ? Integer.parseInt(m.group(1)) : null;
+    }
+
+    public static Integer tryExtractAccountIdFromRequestsQuotes(String destination) {
+        if (destination == null) return null;
+        Matcher m = REQUESTS_ACCOUNT_QUOTES.matcher(destination);
         return m.matches() ? Integer.parseInt(m.group(1)) : null;
     }
 }

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <title>WS Tester - Requests Quotes</title>
+  <style>
+    :root{
+      --bg:#0f1115; --panel:#171a21; --muted:#9aa4b2; --fg:#e6edf3;
+      --ok:#2ecc71; --warn:#f39c12; --err:#e74c3c; --info:#5dade2; --pill:#2d333b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font:14px ui-monospace,Menlo,Consolas,monospace}
+    header{position:sticky;top:0;background:linear-gradient(#0f1115,#0f1115cc,#0f111500);padding:14px 16px;border-bottom:1px solid #1f2430}
+    h3{margin:0 0 10px 0}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+    input{background:#0c0f14;border:1px solid #2a3140;color:var(--fg);padding:8px;border-radius:8px;min-width:140px}
+    input.w{width:520px}
+    button{background:#212734;border:1px solid #2f3747;color:var(--fg);padding:8px 10px;border-radius:8px;cursor:pointer}
+    button:hover{filter:brightness(1.1)}
+    .status{margin-left:auto;padding:4px 10px;border-radius:999px;background:var(--pill);color:var(--muted);font-weight:600}
+    .s-ok{background:rgba(46,204,113,.15);color:#8ff0b6;border:1px solid rgba(46,204,113,.3)}
+    .s-bad{background:rgba(231,76,60,.15);color:#ffb0a6;border:1px solid rgba(231,76,60,.3)}
+    .s-warn{background:rgba(243,156,18,.15);color:#ffd28a;border:1px solid rgba(243,156,18,.3)}
+
+    #log{height:380px;overflow:auto;background:#0b0e13;border-top:1px solid #1f2430}
+    .line{display:flex;gap:8px;padding:8px 12px;border-bottom:1px dashed #1a1f2b}
+    .ts{color:#758195;min-width:172px}
+    .tag{font-weight:700;font-size:12px;padding:2px 8px;border-radius:999px;align-self:flex-start}
+    .tag.info{background:rgba(93,173,226,.18);color:#a7d3ff;border:1px solid rgba(93,173,226,.35)}
+    .tag.ok{background:rgba(46,204,113,.18);color:#8ff0b6;border:1px solid rgba(46,204,113,.35)}
+    .tag.warn{background:rgba(243,156,18,.18);color:#ffd28a;border:1px solid rgba(243,156,18,.35)}
+    .tag.err{background:rgba(231,76,60,.18);color:#ffb0a6;border:1px solid rgba(231,76,60,.35)}
+    .msg{white-space:pre-wrap;word-break:break-word;flex:1;color:#d7dce3}
+    .muted{color:var(--muted)}
+    .legend{color:#9aa4b2;font-size:12px}
+    .pill{display:inline-block;padding:2px 6px;border-radius:6px;background:#1b202b;color:#b7c1cf;border:1px solid #2b3445}
+    .controls{display:flex;gap:8px;align-items:center}
+  </style>
+  <script src="https://unpkg.com/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<header>
+  <h3>WS Tester — Requests · Quotes</h3>
+
+  <div class="row">
+    <label>JWT: <input id="token" class="w" placeholder="pega tu JWT (sin 'Bearer ')" /></label>
+  </div>
+  <div class="row">
+    <label>WS URL: <input id="url" class="w" value="ws://localhost:8080/ws" /></label>
+    <span class="status" id="status">IDLE</span>
+  </div>
+  <div class="row">
+    <label>AccountId (dest): <input id="acct" value="13" /></label>
+    <label>RequestId (header): <input id="req" value="4" /></label>
+
+    <div class="controls">
+      <button id="btnConnect">Connect</button>
+      <button id="btnDisconnect">Disconnect</button>
+      <button id="btnSubscribe">Subscribe</button>
+      <button id="btnUnsubAll">Unsubscribe All</button>
+      <button id="btnClear">Clear</button>
+      <label class="muted"><input type="checkbox" id="autoScroll" checked/> autoscroll</label>
+    </div>
+  </div>
+  <div class="legend">
+    <span class="pill">CONNECT / CLOSE</span>
+    <span class="pill">SUB</span>
+    <span class="pill">MSG</span>
+    <span class="pill">SYSTEM ERROR</span>
+    <span class="pill">STOMP ERROR</span>
+  </div>
+</header>
+
+<div id="log"></div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+  const logBox = $('log');
+  const statusEl = $('status');
+
+  const setStatus = (text, cls='')=>{
+    statusEl.className='status '+cls; statusEl.textContent=text;
+  };
+
+  const stamp = ()=>new Date().toISOString();
+
+  function addLine(kind, text){
+    const line = document.createElement('div'); line.className='line';
+    const ts = document.createElement('span'); ts.className='ts'; ts.textContent = stamp();
+    const tag = document.createElement('span'); tag.className='tag '+(
+            kind==='ok'?'ok': kind==='warn'?'warn': kind==='err'?'err':'info'
+    );
+    tag.textContent = (
+            kind==='ok'?'CONNECTED':
+                    kind==='warn'?'WARN':
+                            kind==='err'?'ERROR':'INFO'
+    );
+    const msg = document.createElement('div'); msg.className='msg'; msg.textContent = text;
+    line.appendChild(ts); line.appendChild(tag); line.appendChild(msg);
+    logBox.appendChild(line);
+    if ($('autoScroll').checked) logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  // helpers semánticos
+  const logInfo = (t)=>addLine('info', t);
+  const logOk   = (t)=>addLine('ok', t);
+  const logWarn = (t)=>addLine('warn', t);
+  const logErr  = (t)=>addLine('err', t);
+
+  let client=null; const subs=[];
+
+  function buildWsUrl(baseUrl, jwt){
+    const sep = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${sep}access_token=${encodeURIComponent(jwt)}`;
+  }
+
+  function connect(){
+    const raw = $('token').value.trim();
+    const baseUrl = $('url').value.trim();
+    if(!raw){ logErr('Token requerido'); return; }
+    if(!/^wss?:\/\//i.test(baseUrl)){ logErr('URL debe empezar con ws:// o wss://'); return; }
+
+    const jwt = raw.replace(/^Bearer\s+/i,'');
+    const brokerURL = buildWsUrl(baseUrl, jwt);
+
+    client = new StompJs.Client({
+      brokerURL,
+      reconnectDelay: 3000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      debug: ()=>{}
+    });
+
+    client.onConnect = (frame)=>{
+      setStatus('CONNECTED','s-ok');
+      logOk('Conectado ' + (frame?.headers ? JSON.stringify(frame.headers) : 'OK'));
+
+      // Canal de errores del sistema (si tu server lo usa)
+      try{
+        const s = client.subscribe('/user/queue/system/errors', (m)=>{
+          logErr(`SYSTEM ERROR: ${m.body}`);
+        });
+        subs.push(s);
+      }catch(e){ logWarn('No se pudo suscribir a /user/queue/system/errors'); }
+    };
+
+    client.onStompError = (frame)=>{
+      logErr(`[STOMP ERROR] ${frame.headers?.message || ''} | ${frame.body || ''}`);
+    };
+    client.onWebSocketClose = (ev)=>{
+      setStatus('CLOSED','s-bad');
+      logWarn(`[WS CLOSE] code=${ev.code} reason=${ev.reason||''}`);
+    };
+    client.onWebSocketError = ()=>{
+      setStatus('ERROR','s-bad');
+      logErr('[WS ERROR]');
+    };
+
+    client.activate();
+    setStatus('CONNECTING…','s-warn');
+    logInfo('Conectando a ' + brokerURL);
+  }
+
+  function disconnect(){
+    try{ subs.forEach(s=>s.unsubscribe()); subs.length=0; }catch{}
+    if(client){
+      client.deactivate().then(()=>{ setStatus('DISCONNECTED',''); logWarn('Desconectado'); });
+      client=null;
+    }
+  }
+
+  function subscribeDest(){
+    if(!client || !client.connected){ logWarn('No conectado'); return; }
+    const acct = $('acct').value.trim();
+    const req  = $('req').value.trim();
+    const dest = `/topic/requests.account.${acct}.quotes`;
+
+    logInfo(`SUB ${dest} (requestId=${req})`);
+    const s = client.subscribe(dest, (msg)=>{
+      addCustom('MSG', ` ${dest}: ${msg.body}`);
+    }, { requestId: req });
+    subs.push(s);
+  }
+
+  function addCustom(tagText, text){
+    const line = document.createElement('div'); line.className='line';
+    const ts = document.createElement('span'); ts.className='ts'; ts.textContent = stamp();
+    const tag = document.createElement('span'); tag.className='tag info'; tag.textContent = tagText;
+    const msg = document.createElement('div'); msg.className='msg'; msg.textContent = text;
+    line.appendChild(ts); line.appendChild(tag); line.appendChild(msg);
+    logBox.appendChild(line);
+    if ($('autoScroll').checked) logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  function unsubscribeAll(){
+    try{ subs.forEach(s=>s.unsubscribe()); subs.length=0; }catch{}
+    logWarn('Unsubscribed all');
+  }
+
+  // wire
+  $('btnConnect').onclick = connect;
+  $('btnDisconnect').onclick = disconnect;
+  $('btnSubscribe').onclick = subscribeDest;
+  $('btnUnsubAll').onclick = unsubscribeAll;
+  $('btnClear').onclick = ()=>{ logBox.innerHTML=''; };
+</script>
+</body>
+</html>

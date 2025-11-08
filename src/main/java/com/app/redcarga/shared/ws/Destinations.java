@@ -8,4 +8,7 @@ public final class Destinations {
 
     /** Cola personal del usuario autenticado para Planning. */
     public static final String USER_QUEUE_PLANNING = "/user/queue/planning/solicitudes";
+
+    /** Topic para que el requester reciba cotizaciones de sus requests. */
+    public static final String TOPIC_REQUEST_ACCOUNT_QUOTES = "/topic/requests.account.%d.quotes";
 }

@@ -16,6 +16,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
 
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
+    private final com.app.redcarga.deals.application.internal.outboundservices.notifications.NotificationsPort notificationsPort;
 
     @Override
     @Transactional
@@ -25,7 +26,18 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
             throw new DomainException("not_member_of_company");
         }
         Quote quote = Quote.create(cmd, creatorAccountId);
-        quoteRepository.save(quote);
+    quoteRepository.save(quote);
+
+    // publish to outbox (same transaction)
+    var notif = new com.app.redcarga.deals.application.internal.outboundservices.notifications.NewQuoteNotification(
+        quote.getId(),
+        quote.getRequestId(),
+        quote.getCompanyId(),
+        quote.getTotalAmount(),
+        quote.getCurrency() == null ? null : quote.getCurrency().name(),
+        java.time.Instant.ofEpochMilli(quote.getCreatedAt().getTime())
+    );
+    notificationsPort.publishNewQuote(notif);
         return quote.getId();
     }
 
