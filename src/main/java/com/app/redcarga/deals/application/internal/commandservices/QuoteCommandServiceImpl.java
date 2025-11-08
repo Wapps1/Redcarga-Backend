@@ -5,6 +5,8 @@ import com.app.redcarga.deals.domain.model.commands.CreateQuoteCommand;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
 import com.app.redcarga.deals.domain.services.QuoteCommandService;
 import com.app.redcarga.deals.application.internal.outboundservices.acl.ProvidersMembershipClient;
+import com.app.redcarga.deals.application.internal.gateways.ChatParticipantGateway;
+import com.app.redcarga.requests.interfaces.acl.RequestFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,8 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
     private final com.app.redcarga.deals.application.internal.outboundservices.notifications.NotificationsPort notificationsPort;
+    private final RequestFacade requestsFacade;
+    private final ChatParticipantGateway chatParticipantGateway;
 
     @Override
     @Transactional
@@ -64,5 +68,32 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
         }
         quote.removeItem(requestItemId);
         quoteRepository.save(quote);
+    }
+
+    @Override
+    @Transactional
+    public void startNegotiation(Integer quoteId, Integer actorAccountId, Integer ifMatchVersion, String idempotencyKey) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new DomainException("quote_not_found"));
+
+        // Only the original requester of the request may start the negotiation
+        if (!requestsFacade.isRequester(quote.getRequestId(), actorAccountId)) {
+            throw new DomainException("not_request_owner");
+        }
+
+        // optimistic version check (If-Match)
+        if (ifMatchVersion == null || !ifMatchVersion.equals(quote.getVersion())) {
+            throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Quote.class, quoteId);
+        }
+
+        // Domain transition
+        quote.startNegotiation();
+        quoteRepository.save(quote);
+
+        // Ensure chat participants: requester (actor) and provider (quote creator)
+        chatParticipantGateway.ensure(quote.getId(), actorAccountId);
+        chatParticipantGateway.ensure(quote.getId(), quote.getCreatedByAccountId());
+
+        // TODO: idempotency logging / outbox event if required
     }
 }

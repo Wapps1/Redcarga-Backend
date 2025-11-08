@@ -104,4 +104,11 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
             throw new DomainException("quote_state_not_editable");
         }
     }
+
+    /** Transition PENDIENTE -> TRATO (start negotiation). Throws DomainException if invalid. */
+    public void startNegotiation() {
+        if (this.stateCode == null) throw new DomainException("quote_state_transition_invalid");
+        if (!"PENDIENTE".equals(this.stateCode)) throw new DomainException("quote_state_transition_invalid");
+        this.stateCode = "TRATO";
+    }
 }
