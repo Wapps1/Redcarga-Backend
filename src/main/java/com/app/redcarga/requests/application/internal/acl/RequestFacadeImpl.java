@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class RequestFacadeImpl implements RequestFacade {
 
     private final RequestQueryService requestQueryService;
@@ -18,4 +17,5 @@ public class RequestFacadeImpl implements RequestFacade {
         if (requestId == null || accountId == null) return false;
         return requestQueryService.isRequester(requestId, accountId);
     }
+
 }

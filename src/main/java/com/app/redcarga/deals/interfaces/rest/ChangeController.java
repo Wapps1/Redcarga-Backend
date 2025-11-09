@@ -38,7 +38,7 @@ public class ChangeController {
             JwtAuthenticationToken principal
     ) {
         Integer actorAccountId = Integer.valueOf(principal.getToken().getSubject());
-        Integer changeId = changeCommandService.applyFreeChange(quoteId, request.toDomainItems(), actorAccountId, ifMatch, idempotencyKey);
+    Integer changeId = changeCommandService.decideAndApplyChange(quoteId, request.toDomainItems(), actorAccountId, ifMatch, idempotencyKey);
         return new ChangeResponse(changeId);
     }
 }

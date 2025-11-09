@@ -29,10 +29,12 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
     private final JpaChangeRepository changeRepository;
     private final ChatMessageGateway chatMessageGateway;
     private final DealsChangeOutboxAdapter outboxAdapter;
+    private final com.app.redcarga.deals.application.internal.gateways.ChatParticipantGateway chatParticipantGateway;
 
     @Override
     @Transactional
     public Integer applyFreeChange(Integer quoteId, List<ChangeItem> items, Integer actorAccountId, Integer ifMatchVersion, String idempotencyKey) {
+        // restore original applyFreeChange behavior: permission is requester or provider member, only TRATO/EN_ESPERA
         Quote quote = quoteRepository.findById(quoteId).orElseThrow(() -> new DomainException("quote_not_found"));
 
         // permission: either requester or member of provider company
@@ -54,11 +56,64 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
         // create Change entity (APLICADO)
         Change change = Change.createApplied(quote, "LIBRE", actorAccountId);
 
-        // apply items and attach to change
+        // attach items to change
         for (ChangeItem ci : items) {
-            // attach to change
             change.addItem(ci);
+        }
 
+        // apply items on aggregate
+        applyChangesToQuote(quote, items);
+
+        // persist quote (mutations)
+        quoteRepository.save(quote);
+
+        // persist change (will cascade change_items)
+        Change saved = changeRepository.save(change);
+
+        // insert chat_message SYSTEM (minimal body) referencing change
+        String body = "Cambio aplicado";
+        chatMessageGateway.insertSystemMessage(quoteId, "CHANGE_APPLIED", saved.getChangeId(), body, actorAccountId);
+
+        // persist outbox snapshot (do NOT publish now)
+        outboxAdapter.persistChangeOutbox(saved);
+
+        return saved.getChangeId();
+    }
+
+    @Override
+    @Transactional
+    public Integer decideAndApplyChange(Integer quoteId, List<ChangeItem> items, Integer actorAccountId, Integer ifMatchVersion, String idempotencyKey) {
+        Quote quote = quoteRepository.findById(quoteId).orElseThrow(() -> new DomainException("quote_not_found"));
+
+        // If-Match optimistic check for direct-apply path
+        if (ifMatchVersion != null && !ifMatchVersion.equals(quote.getVersion())) {
+            throw new ObjectOptimisticLockingFailureException(Quote.class, quoteId);
+        }
+
+        String state = quote.getStateCode();
+        if ("PENDIENTE".equals(state)) {
+            // only creator can perform direct changes
+            if (!actorAccountId.equals(quote.getCreatedByAccountId())) {
+                throw new DomainException("not_allowed_to_change_quote");
+            }
+            applyChangesToQuote(quote, items);
+            quoteRepository.save(quote);
+            return null;
+        }
+
+        if ("TRATO".equals(state) || "EN_ESPERA".equals(state)) {
+            // require chat participant
+            boolean isParticipant = chatParticipantGateway.exists(quoteId, actorAccountId);
+            if (!isParticipant) throw new DomainException("not_chat_participant");
+            // delegate to applyFreeChange which contains permission checks for requester/provider member
+            return applyFreeChange(quoteId, items, actorAccountId, ifMatchVersion, idempotencyKey);
+        }
+
+        throw new DomainException("change_not_allowed_in_state");
+    }
+
+    private void applyChangesToQuote(Quote quote, List<ChangeItem> items) {
+        for (ChangeItem ci : items) {
             switch (ci.getFieldCode()) {
                 case "PRICE_TOTAL":
                     try {
@@ -69,7 +124,6 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
                     }
                     break;
                 case "QTY":
-                    // ci.targetQuoteItemId refers to quote_item.id (primary key). Find the corresponding requestItemId
                     if (ci.getTargetQuoteItemId() == null) throw new DomainException("change_missing_target");
                     var found = quote.getItems().stream()
                             .filter(it -> it.getId().equals(ci.getTargetQuoteItemId()))
@@ -103,20 +157,5 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
                     throw new DomainException("change_item_field_unknown");
             }
         }
-
-        // persist quote (mutations)
-        quoteRepository.save(quote);
-
-        // persist change (will cascade change_items)
-        Change saved = changeRepository.save(change);
-
-        // insert chat_message SYSTEM (minimal body) referencing change
-        String body = "Cambio aplicado";
-        chatMessageGateway.insertSystemMessage(quoteId, "CHANGE_APPLIED", saved.getChangeId(), body, actorAccountId);
-
-        // persist outbox snapshot (do NOT publish now)
-        outboxAdapter.persistChangeOutbox(saved);
-
-        return saved.getChangeId();
     }
 }
