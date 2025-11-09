@@ -54,7 +54,7 @@ public class QuotesController {
         return ResponseEntity.noContent().build();
     }
 
-    // DELETE item
+    /*
     @DeleteMapping("/{quoteId}/items/{requestItemId}")
     @PreAuthorize("hasRole('PROVIDER')")
     public ResponseEntity<Void> removeItem(@PathVariable Integer quoteId,
@@ -64,6 +64,7 @@ public class QuotesController {
         quoteCommandService.removeItem(quoteId, requestItemId, accountId);
         return ResponseEntity.noContent().build();
     }
+    */
 
     @PostMapping("/{quoteId}:start-negotiation")
     @PreAuthorize("hasRole('CLIENT')")

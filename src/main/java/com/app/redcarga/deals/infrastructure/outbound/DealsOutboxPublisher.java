@@ -29,30 +29,36 @@ public class DealsOutboxPublisher {
         List<DealsOutboxEntry> entries = outboxRepository.findByProcessedAtIsNullOrderByCreatedAtAsc();
         for (DealsOutboxEntry e : entries) {
             try {
-                // only handle request-pending QUOTE_CREATED for now
-                if (!"request-pending".equals(e.getRouteKind()) || !"QUOTE_CREATED".equals(e.getEventType())) {
+                if ("request-pending".equals(e.getRouteKind()) && "QUOTE_CREATED".equals(e.getEventType())) {
+                    // parse payload to extract requestId
+                    var node = objectMapper.readTree(e.getPayload());
+                    Integer requestId = node.has("requestId") && !node.get("requestId").isNull() ? node.get("requestId").asInt() : null;
+                    if (requestId != null) {
+                        var optReq = requestQueryService.findById(requestId);
+                        if (optReq.isPresent()) {
+                            int requesterAccountId = optReq.get().getRequesterAccountId();
+                            String dest = String.format(Destinations.TOPIC_REQUEST_ACCOUNT_QUOTES, requesterAccountId);
+                            messagingTemplate.convertAndSend(dest, node); // send parsed JSON
+                        }
+                    }
                     e.setProcessedAt(Instant.now());
                     outboxRepository.save(e);
                     continue;
                 }
-                // parse payload to extract requestId
-                var node = objectMapper.readTree(e.getPayload());
-                Integer requestId = node.has("requestId") && !node.get("requestId").isNull() ? node.get("requestId").asInt() : null;
-                if (requestId == null) {
+
+                if ("quote-chat".equals(e.getRouteKind())) {
+                    Integer quoteId = e.getQuoteId();
+                    if (quoteId != null) {
+                        String dest = String.format(Destinations.TOPIC_DEALS_QUOTES_CHAT, quoteId);
+                        var node = objectMapper.readTree(e.getPayload());
+                        messagingTemplate.convertAndSend(dest, node);
+                    }
                     e.setProcessedAt(Instant.now());
                     outboxRepository.save(e);
                     continue;
                 }
-                var optReq = requestQueryService.findById(requestId);
-                if (optReq.isEmpty()) {
-                    e.setProcessedAt(Instant.now());
-                    outboxRepository.save(e);
-                    continue;
-                }
-                int requesterAccountId = optReq.get().getRequesterAccountId();
-                String dest = String.format(Destinations.TOPIC_REQUEST_ACCOUNT_QUOTES, requesterAccountId);
-                // forward original payload as-is
-                messagingTemplate.convertAndSend(dest, e.getPayload());
+
+                // Unknown route/event: mark processed to avoid retry storms
                 e.setProcessedAt(Instant.now());
                 outboxRepository.save(e);
             } catch (Exception ex) {

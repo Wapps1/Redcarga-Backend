@@ -89,6 +89,12 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
         item.updateQty(newQty);
     }
 
+    public void updateTotalAmount(java.math.BigDecimal newTotal) {
+        ensureEditable();
+        if (newTotal == null || newTotal.compareTo(java.math.BigDecimal.ZERO) <= 0) throw new DomainException("totalAmount_invalid");
+        this.totalAmount = newTotal;
+    }
+
     public void removeItem(Integer requestItemId) {
         ensureEditable();
         var it = items.stream().filter(i -> i.getRequestItemId().equals(requestItemId)).findFirst()

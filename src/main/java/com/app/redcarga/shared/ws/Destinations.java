@@ -11,4 +11,7 @@ public final class Destinations {
 
     /** Topic para que el requester reciba cotizaciones de sus requests. */
     public static final String TOPIC_REQUEST_ACCOUNT_QUOTES = "/topic/requests.account.%d.quotes";
+
+    /** Topic de chat por quote en Deals. */
+    public static final String TOPIC_DEALS_QUOTES_CHAT = "/topic/deals.quotes.%d.chat";
 }

@@ -1,6 +1,8 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
+import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
+import com.app.redcarga.shared.ws.auth.ChatSubscriptionVerifierPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,15 +21,18 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private static final Logger log = LoggerFactory.getLogger(StompAuthChannelInterceptor.class);
 
     private final MembershipVerifierPort membership;
-    private final com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort requestOwnershipVerifier;
+    private final RequestOwnershipVerifierPort requestOwnershipVerifier;
     private final ApplicationEventPublisher events;
+    private final ChatSubscriptionVerifierPort chatSubscriptionVerifier;
 
     public StompAuthChannelInterceptor(MembershipVerifierPort membership,
-                                       com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort requestOwnershipVerifier,
-                                       ApplicationEventPublisher events) {
+                                       RequestOwnershipVerifierPort requestOwnershipVerifier,
+                                       ApplicationEventPublisher events,
+                                       ChatSubscriptionVerifierPort chatSubscriptionVerifier) {
         this.membership = membership;
         this.requestOwnershipVerifier = requestOwnershipVerifier;
         this.events = events;
+        this.chatSubscriptionVerifier = chatSubscriptionVerifier;
     }
 
     @Override
@@ -107,6 +112,34 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                         notifyAccessDenied(user.getName(), "Error al verificar request ownership", dest);
                         return null;
                     }
+                }
+            }
+
+            // Validate subscriber for deals quotes chat topic
+            Integer quoteIdFromChat = DestinationPatterns.tryExtractQuoteIdFromDealsQuotesChat(dest);
+            if (quoteIdFromChat != null) {
+                var user = acc.getUser();
+                if (user == null || user.getName() == null) {
+                    notifyAccessDenied(null, "No autenticado", dest);
+                    return null;
+                }
+                final int accountId;
+                try {
+                    accountId = Integer.parseInt(user.getName());
+                } catch (NumberFormatException e) {
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
+                    return null;
+                }
+                boolean allowed;
+                try {
+                    allowed = chatSubscriptionVerifier.canSubscribeToQuote(quoteIdFromChat, accountId);
+                } catch (Exception ex) {
+                    notifyAccessDenied(user.getName(), "Error al verificar acceso al chat", dest);
+                    return null;
+                }
+                if (!allowed) {
+                    notifyAccessDenied(user.getName(), "No autorizado para chat de quote=" + quoteIdFromChat, dest);
+                    return null;
                 }
             }
         }

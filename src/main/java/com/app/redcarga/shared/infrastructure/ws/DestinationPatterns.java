@@ -26,4 +26,14 @@ public final class DestinationPatterns {
         Matcher m = REQUESTS_ACCOUNT_QUOTES.matcher(destination);
         return m.matches() ? Integer.parseInt(m.group(1)) : null;
     }
+
+    /** /topic/deals.quotes.{quoteId}.chat */
+    public static final Pattern DEALS_QUOTES_CHAT =
+            Pattern.compile("^/topic/deals\\.quotes\\.(\\d+)\\.chat$");
+
+    public static Integer tryExtractQuoteIdFromDealsQuotesChat(String destination) {
+        if (destination == null) return null;
+        Matcher m = DEALS_QUOTES_CHAT.matcher(destination);
+        return m.matches() ? Integer.parseInt(m.group(1)) : null;
+    }
 }

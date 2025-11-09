@@ -2,6 +2,7 @@ package com.app.redcarga.shared.infrastructure.ws;
 
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
+import com.app.redcarga.shared.ws.auth.ChatSubscriptionVerifierPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,15 +42,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final MembershipVerifierPort membershipVerifierPort;
     private final RequestOwnershipVerifierPort requestOwnershipVerifierPort;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final ChatSubscriptionVerifierPort chatSubscriptionVerifierPort;
 
     public WebSocketConfig(@Qualifier("iamJwtDecoder") JwtDecoder jwtDecoder,
                            MembershipVerifierPort membershipVerifierPort,
                            RequestOwnershipVerifierPort requestOwnershipVerifierPort,
-                           ApplicationEventPublisher applicationEventPublisher) {
+                           ApplicationEventPublisher applicationEventPublisher,
+                           ChatSubscriptionVerifierPort chatSubscriptionVerifierPort) {
         this.jwtDecoder = jwtDecoder;
         this.membershipVerifierPort = membershipVerifierPort;
         this.requestOwnershipVerifierPort = requestOwnershipVerifierPort;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.chatSubscriptionVerifierPort = chatSubscriptionVerifierPort;
     }
 
     @Override
@@ -81,7 +85,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         // Interceptor sin SimpMessagingTemplate para evitar ciclo de beans; listener separado enviará feedback
-        registration.interceptors(new StompAuthChannelInterceptor(membershipVerifierPort, requestOwnershipVerifierPort, applicationEventPublisher));
+    registration.interceptors(new StompAuthChannelInterceptor(
+        membershipVerifierPort,
+        requestOwnershipVerifierPort,
+        applicationEventPublisher,
+        chatSubscriptionVerifierPort
+    ));
     }
 
     // Exponer bean propio para el broker para evitar nombre que colisione con Spring

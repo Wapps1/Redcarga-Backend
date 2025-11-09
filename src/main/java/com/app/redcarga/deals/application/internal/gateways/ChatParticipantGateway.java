@@ -8,4 +8,7 @@ public interface ChatParticipantGateway {
      * Implementations should use INSERT ... ON CONFLICT DO NOTHING or equivalent.
      */
     void ensure(int quoteId, int userId);
+
+    /** Check if (quoteId,userId) is a participant. */
+    boolean exists(int quoteId, int userId);
 }

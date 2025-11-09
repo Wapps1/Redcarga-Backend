@@ -17,4 +17,13 @@ public class PgChatParticipantGateway implements ChatParticipantGateway {
             quoteId, userId
         );
     }
+
+    @Override
+    public boolean exists(int quoteId, int userId) {
+        Boolean b = jdbc.queryForObject(
+            "SELECT EXISTS (SELECT 1 FROM deals.chat_participant WHERE quote_id=? AND user_id=?)",
+            Boolean.class, quoteId, userId
+        );
+        return Boolean.TRUE.equals(b);
+    }
 }

@@ -1,0 +1,1 @@
+ALTER TABLE deals.change_item DROP CONSTRAINT change_item_target_quote_item_id_fkey;
