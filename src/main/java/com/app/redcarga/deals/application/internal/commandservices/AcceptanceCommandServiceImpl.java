@@ -3,8 +3,11 @@ package com.app.redcarga.deals.application.internal.commandservices;
 import com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway;
 import com.app.redcarga.deals.domain.model.entities.AcceptanceProposal;
 import com.app.redcarga.deals.domain.repositories.AcceptanceProposalRepository;
+
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
 import com.app.redcarga.deals.domain.services.AcceptanceCommandService;
+import com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter;
+import com.app.redcarga.deals.infrastructure.outbound.DealsOutboxPublisher;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import com.app.redcarga.shared.events.requests.RequestAcceptedEvent;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +23,8 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     private final AcceptanceProposalRepository acceptanceRepo;
     private final QuoteRepository quoteRepository;
     private final ChatMessageGateway chatMessageGateway;
-    private final com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter chatOutboxAdapter;
-    private final com.app.redcarga.deals.infrastructure.outbound.DealsOutboxPublisher outboxPublisher;
+    private final DealsChatOutboxAdapter chatOutboxAdapter;
+    private final DealsOutboxPublisher outboxPublisher;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -88,6 +91,12 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     if (!"ACEPTADA".equals(quote.getStateCode())) {
         quote.setStateCode("ACEPTADA");
         quoteRepository.save(quote);
+    }
+
+    // NUEVO: mover las demás quotes en la misma request: TRATO -> EN_ESPERA
+    Integer requestId = quote.getRequestId();
+    if (requestId != null) {
+        quoteRepository.updateStateForRequestExcept(requestId, quote.getId(), "TRATO", "EN_ESPERA");
     }
 
     // System chat message (ACCEPTANCE_CONFIRMED)

@@ -194,4 +194,11 @@ public class RequestCommandServiceImpl implements RequestCommandService {
         if (requestId == null || acceptedQuoteId == null) throw new IllegalArgumentException("request_or_quote_required");
         requestAcceptanceRepository.markAsAccepted(requestId, acceptedQuoteId);
     }
+
+    @Override
+    @Transactional
+    public void clearAcceptedQuoteIfMatches(Integer requestId, Integer quoteId) {
+        if (requestId == null || quoteId == null) throw new IllegalArgumentException("request_or_quote_required");
+        requestAcceptanceRepository.clearAcceptedQuoteIfMatches(requestId, quoteId);
+    }
 }

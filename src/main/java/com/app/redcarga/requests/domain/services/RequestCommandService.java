@@ -7,4 +7,5 @@ public interface RequestCommandService {
     Integer create(CreateRequestCommand cmd);
     void close(CloseRequestCommand cmd);
     void markAsAccepted(Integer requestId, Integer acceptedQuoteId);
+    void clearAcceptedQuoteIfMatches(Integer requestId, Integer quoteId);
 }

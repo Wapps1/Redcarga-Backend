@@ -13,6 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
+import com.app.redcarga.deals.infrastructure.outbound.DealsOutboxPublisher;
+import com.app.redcarga.shared.events.requests.RequestAcceptedClearedEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,8 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     private final ChatParticipantGateway chatParticipantGateway;
     private final com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway chatMessageGateway;
     private final com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter chatOutboxAdapter;
+    private final DealsOutboxPublisher outboxPublisher;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -133,6 +138,25 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
             Integer requestId = quote.getRequestId();
             quoteRepository.updateStateForRequestExcept(requestId, quote.getId(), "EN_ESPERA", "TRATO");
             // per requirement: do NOT notify these other quotes
+            // Publish event to requests outbox so Requests BC can clear accepted_quote_id if it matches
+            publishRequestAcceptedClearedEvent(requestId, quote.getId(), rejectedBy);
+        }
+    }
+
+    private void publishRequestAcceptedClearedEvent(Integer requestId, Integer quoteId, Integer actorAccountId) {
+        try {
+            var evt = new RequestAcceptedClearedEvent(
+                    java.util.UUID.randomUUID().toString(),
+                    java.time.Instant.now(),
+                    requestId,
+                    quoteId,
+                    actorAccountId,
+                    1
+            );
+            String payload = objectMapper.writeValueAsString(evt);
+            outboxPublisher.enqueue("requests", "request.accepted.cleared.v1", requestId, quoteId, payload);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

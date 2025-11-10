@@ -56,4 +56,23 @@ public class PgRequestRepository implements RequestAcceptanceRepository {
         // Already accepted with a different quote
         throw new DomainException("request_already_accepted");
     }
+
+    @Override
+    @Transactional
+    public void clearAcceptedQuoteIfMatches(Integer requestId, Integer quoteId) {
+    if (requestId == null || quoteId == null) throw new IllegalArgumentException("request_or_quote_required");
+    int updated = jdbc.update(
+        "UPDATE requests.requests SET accepted_quote_id = NULL WHERE request_id = :requestId AND accepted_quote_id = :quoteId",
+        Map.of("requestId", requestId, "quoteId", quoteId)
+    );
+    if (updated == 1) return; // cleared successfully
+
+    // If nothing updated, check whether the request exists; if not, raise not found. If exists and accepted_quote_id is different or null, do nothing.
+    var rows = jdbc.queryForList(
+        "SELECT accepted_quote_id FROM requests.requests WHERE request_id = :requestId",
+        Map.of("requestId", requestId)
+    );
+    if (rows.isEmpty()) throw new DomainException("request_not_found");
+    // otherwise: accepted_quote_id is either null or different than quoteId => no action needed
+    }
 }
