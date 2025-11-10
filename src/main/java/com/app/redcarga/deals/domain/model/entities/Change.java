@@ -22,7 +22,7 @@ public class Change {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quote_id", nullable = false)
-    private com.app.redcarga.deals.domain.model.aggregates.Quote quote;
+    private Quote quote;
 
     @Column(name = "kind_code", length = 16, nullable = false)
     private String kindCode; // LIBRE | PROPUESTA

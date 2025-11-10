@@ -33,6 +33,7 @@ public class DealsOutboxEntry {
     @Column(name = "processed_at")
     private Instant processedAt;
 
+
     // getters/setters
     public Integer getId() { return id; }
     public String getRouteKind() { return routeKind; }

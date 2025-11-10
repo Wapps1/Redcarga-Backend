@@ -6,4 +6,5 @@ package com.app.redcarga.requests.interfaces.acl;
  */
 public interface RequestFacade {
     boolean isRequester(Integer requestId, Integer accountId);
+
 }

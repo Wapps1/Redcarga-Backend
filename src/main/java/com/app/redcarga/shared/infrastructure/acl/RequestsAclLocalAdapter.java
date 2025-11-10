@@ -1,19 +1,20 @@
 package com.app.redcarga.shared.infrastructure.acl;
 
-import com.app.redcarga.requests.interfaces.acl.RequestFacade;
 import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
-import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
-/** Adapter that implements the shared RequestOwnershipVerifierPort using the Requests BC facade. */
+/**
+ * Fallback adapter for RequestOwnershipVerifierPort only if no implementation is present.
+ * Does not depend on RequestFacade to avoid cross-BC coupling and bean cycles.
+ */
 @Component
-@RequiredArgsConstructor
+@ConditionalOnMissingBean(RequestOwnershipVerifierPort.class)
 public class RequestsAclLocalAdapter implements RequestOwnershipVerifierPort {
-
-    private final RequestFacade requestFacade;
 
     @Override
     public boolean isRequester(Integer requestId, Integer accountId) {
-        return requestFacade.isRequester(requestId, accountId);
+        // No-op fallback; real implementation should be provided by Requests BC.
+        throw new IllegalStateException("No RequestOwnershipVerifierPort implementation available");
     }
 }

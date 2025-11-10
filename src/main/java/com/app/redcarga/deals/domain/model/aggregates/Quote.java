@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -33,6 +34,7 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
     @Column(name = "currency_code", length = 3, nullable = false)
     private Currency currency = Currency.PEN;
 
+    @Setter
     @Column(name = "state_code", length = 32, nullable = false)
     private String stateCode;
 
@@ -117,4 +119,5 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
         if (!"PENDIENTE".equals(this.stateCode)) throw new DomainException("quote_state_transition_invalid");
         this.stateCode = "TRATO";
     }
+
 }

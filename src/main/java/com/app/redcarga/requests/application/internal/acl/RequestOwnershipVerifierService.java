@@ -1,22 +1,18 @@
 package com.app.redcarga.requests.application.internal.acl;
 
-import com.app.redcarga.requests.domain.services.RequestCommandService;
 import com.app.redcarga.requests.domain.services.RequestQueryService;
-import com.app.redcarga.requests.interfaces.acl.RequestFacade;
+import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class RequestFacadeImpl implements RequestFacade {
+public class RequestOwnershipVerifierService implements RequestOwnershipVerifierPort {
 
     private final RequestQueryService requestQueryService;
-    private final RequestCommandService requestCommandService;
 
     @Override
     public boolean isRequester(Integer requestId, Integer accountId) {
-        if (requestId == null || accountId == null) return false;
         return requestQueryService.isRequester(requestId, accountId);
     }
 }

@@ -16,22 +16,24 @@ public class PgChatMessageGateway implements ChatMessageGateway {
     private final NamedParameterJdbcTemplate jdbc;
 
     private static final RowMapper<ChatMessageDto> MAPPER = (rs, n) -> new ChatMessageDto(
-            rs.getInt("chat_message_id"),
-            rs.getInt("quote_id"),
-            rs.getString("type_code"),
-            rs.getString("content_code"),
-            rs.getString("body"),
-            rs.getString("media_url"),
-            Optional.ofNullable(rs.getString("client_dedup_key")).map(java.util.UUID::fromString).orElse(null),
-            rs.getInt("created_by"),
-            rs.getTimestamp("created_at").toInstant()
+        rs.getInt("chat_message_id"),
+        rs.getInt("quote_id"),
+        rs.getString("type_code"),
+        rs.getString("content_code"),
+        rs.getString("body"),
+        rs.getString("media_url"),
+        Optional.ofNullable(rs.getString("client_dedup_key")).map(java.util.UUID::fromString).orElse(null),
+        rs.getInt("created_by"),
+        rs.getTimestamp("created_at").toInstant(),
+        rs.getString("system_subtype_code"),
+        null // info se completa al serializar al WS si corresponde
     );
 
     @Override
     public Optional<ChatMessageDto> findByDedupKey(int quoteId, UUID dedupKey) {
     if (dedupKey == null) return Optional.empty();
 
-    var sql = "select chat_message_id, quote_id, type_code, content_code, body, media_url, client_dedup_key, created_by, created_at " +
+    var sql = "select chat_message_id, quote_id, type_code, content_code, body, media_url, client_dedup_key, created_by, created_at, system_subtype_code " +
         "from deals.chat_message where quote_id=:q and client_dedup_key = CAST(:k AS uuid)";
     var params = Map.of("q", quoteId, "k", dedupKey.toString());
     var list = jdbc.query(sql, params, MAPPER);
@@ -76,7 +78,7 @@ public class PgChatMessageGateway implements ChatMessageGateway {
     @Override
     public List<ChatMessageDto> findAfter(int quoteId, int afterId, int limit) {
         var sql = """
-            select chat_message_id, quote_id, type_code, content_code, body, media_url, client_dedup_key, created_by, created_at
+            select chat_message_id, quote_id, type_code, content_code, body, media_url, client_dedup_key, created_by, created_at, system_subtype_code
             from deals.chat_message
             where quote_id=:q and chat_message_id > :a
             order by chat_message_id asc

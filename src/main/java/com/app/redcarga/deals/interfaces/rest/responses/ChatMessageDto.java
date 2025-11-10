@@ -12,5 +12,7 @@ public record ChatMessageDto(
         String mediaUrl,
         UUID clientDedupKey,
         Integer createdBy,
-        Instant createdAt
+        Instant createdAt,
+        String systemSubtypeCode,
+        Object info
 ) {}

@@ -14,17 +14,13 @@ public class DealsChangeOutboxAdapter {
     private final JpaDealsOutboxRepository outbox;
     private final ObjectMapper mapper;
 
-    /**
-     * Persist an outbox entry for a change. This does NOT publish; it only saves a row to the deals.outbox table
-     * with route_kind='quote-chat' and eventType='CHANGE_APPLIED' (caller decides eventType).
-     */
+    /** Persist an outbox entry for a change to quote chat (message + info.change). */
     public void persistChangeOutbox(Change change) {
         try {
             DealsOutboxEntry e = new DealsOutboxEntry();
             e.setRouteKind("quote-chat");
             e.setQuoteId(change.getQuote().getId());
-            e.setEventType("CHANGE_APPLIED");
-            // Build minimal payload: change + items
+            e.setEventType("SYSTEM_MESSAGE");
             var dto = buildPayload(change);
             e.setPayload(mapper.writeValueAsString(dto));
             outbox.save(e);
@@ -34,13 +30,13 @@ public class DealsChangeOutboxAdapter {
     }
 
     private Object buildPayload(Change change) {
-        var payload = new java.util.HashMap<String, Object>();
-        payload.put("changeId", change.getChangeId());
-        payload.put("quoteId", change.getQuote().getId());
-        payload.put("kind", change.getKindCode());
-        payload.put("status", change.getStatusCode());
-        payload.put("createdBy", change.getCreatedBy());
-        payload.put("createdAt", change.getCreatedAt());
+        var info = new java.util.HashMap<String, Object>();
+        info.put("changeId", change.getChangeId());
+        info.put("quoteId", change.getQuote().getId());
+        info.put("kind", change.getKindCode());
+        info.put("status", change.getStatusCode());
+        info.put("createdBy", change.getCreatedBy());
+        info.put("createdAt", change.getCreatedAt());
         var items = new java.util.ArrayList<java.util.Map<String,Object>>();
         for (var it : change.getItems()) {
             var m = new java.util.HashMap<String,Object>();
@@ -52,7 +48,18 @@ public class DealsChangeOutboxAdapter {
             m.put("newValue", it.getNewValue());
             items.add(m);
         }
-        payload.put("items", items);
-        return payload;
+        info.put("items", items);
+
+        var message = new java.util.HashMap<String, Object>();
+        message.put("messageId", null);
+        message.put("quoteId", change.getQuote().getId());
+        message.put("typeCode", "SYSTEM");
+        message.put("contentCode", "CHANGE");
+        message.put("body", "Cambio aplicado");
+        message.put("createdBy", change.getCreatedBy());
+        message.put("createdAt", change.getCreatedAt());
+        message.put("system_subtype_code", "CHANGE_APPLIED");
+        message.put("info", info);
+        return message;
     }
 }

@@ -27,4 +27,35 @@ public class DealsChatOutboxAdapter {
             throw new RuntimeException("outbox_serialization_error", ex);
         }
     }
+
+    /** Persist system chat message into outbox (route_kind=quote-chat, event=SYSTEM_MESSAGE). */
+    public void persistSystemMessageOutbox(ChatMessageDto dto) {
+        try {
+            DealsOutboxEntry e = new DealsOutboxEntry();
+            e.setRouteKind("quote-chat");
+            e.setQuoteId(dto.quoteId());
+            e.setEventType("SYSTEM_MESSAGE");
+            e.setPayload(mapper.writeValueAsString(dto));
+            outbox.save(e);
+        } catch (Exception ex) {
+            throw new RuntimeException("outbox_serialization_error", ex);
+        }
+    }
+
+    /** Helper to build unified SYSTEM message JSON with info block */
+    public ChatMessageDto buildSystemMessage(Integer messageId, Integer quoteId, String subtype, String body, Integer createdBy, java.time.Instant createdAt, Object info) {
+        return new ChatMessageDto(
+                messageId,
+                quoteId,
+                "SYSTEM",
+                subtype != null && subtype.startsWith("ACCEPTANCE") ? "ACCEPTANCE" : (subtype != null && subtype.startsWith("CHANGE") ? "CHANGE" : "SYSTEM"),
+                body,
+                null,
+                null,
+                createdBy,
+                createdAt,
+                subtype,
+                info
+        );
+    }
 }

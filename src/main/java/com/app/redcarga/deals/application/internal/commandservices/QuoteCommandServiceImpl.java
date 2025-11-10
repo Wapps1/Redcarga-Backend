@@ -1,5 +1,7 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
+import com.app.redcarga.deals.application.internal.outboundservices.notifications.NewQuoteNotification;
+import com.app.redcarga.deals.application.internal.outboundservices.notifications.NotificationsPort;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
 import com.app.redcarga.deals.domain.model.commands.CreateQuoteCommand;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
@@ -18,7 +20,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
 
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
-    private final com.app.redcarga.deals.application.internal.outboundservices.notifications.NotificationsPort notificationsPort;
+    private final NotificationsPort notificationsPort;
     private final RequestFacade requestsFacade;
     private final ChatParticipantGateway chatParticipantGateway;
 
@@ -33,7 +35,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     quoteRepository.save(quote);
 
     // publish to outbox (same transaction)
-    var notif = new com.app.redcarga.deals.application.internal.outboundservices.notifications.NewQuoteNotification(
+    var notif = new NewQuoteNotification(
         quote.getId(),
         quote.getRequestId(),
         quote.getCompanyId(),
