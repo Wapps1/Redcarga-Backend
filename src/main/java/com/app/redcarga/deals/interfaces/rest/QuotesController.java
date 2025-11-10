@@ -83,6 +83,14 @@ public class QuotesController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{quoteId}:reject")
+    public ResponseEntity<Void> rejectQuote(@PathVariable Integer quoteId,
+                                            JwtAuthenticationToken principal) {
+        Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+        quoteCommandService.rejectQuote(quoteId, accountId);
+        return ResponseEntity.noContent().build();
+    }
+
     // Simple inline request record for PATCH quantity
     public record UpdateItemQtyRequest(
             @NotNull Integer requestItemId,

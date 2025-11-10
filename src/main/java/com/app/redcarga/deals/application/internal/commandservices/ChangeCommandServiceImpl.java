@@ -72,7 +72,7 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
 
         // insert chat_message SYSTEM (minimal body) referencing change
         String body = "Cambio aplicado";
-        chatMessageGateway.insertSystemMessage(quoteId, "CHANGE_APPLIED", saved.getChangeId(), body, actorAccountId);
+    chatMessageGateway.insertSystemMessage(quoteId, "CHANGE_APPLIED", saved.getChangeId(), null, body, actorAccountId);
 
         // persist outbox snapshot (do NOT publish now)
         outboxAdapter.persistChangeOutbox(saved);

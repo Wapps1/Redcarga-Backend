@@ -43,9 +43,10 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
         proposal = acceptanceRepo.save(proposal);
 
         // Insert system chat message (ACCEPTANCE_REQUEST)
-    int messageId = chatMessageGateway.insertSystemMessage(
+        int messageId = chatMessageGateway.insertSystemMessage(
         quoteId,
-        "ACCEPTANCE_PROPOSED",
+        "ACCEPTANCE_REQUEST",
+        null,
         proposal.getAcceptanceId(),
         note == null ? "" : normalizeNote(note),
         actorAccountId
@@ -59,7 +60,7 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
             "status", proposal.getStatus().name()
         )
     );
-    snapshotOutboxEnriched(messageId, quoteId, "ACCEPTANCE_PROPOSED", info);
+    snapshotOutboxEnriched(messageId, quoteId, "ACCEPTANCE_REQUEST", info);
         return proposal.getAcceptanceId();
     }
 
@@ -93,6 +94,7 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     int messageId = chatMessageGateway.insertSystemMessage(
         quoteId,
         "ACCEPTANCE_CONFIRMED",
+        null,
         acceptanceId,
         "",
         resolverAccountId
@@ -131,6 +133,7 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     int messageId = chatMessageGateway.insertSystemMessage(
         quoteId,
         "ACCEPTANCE_REJECTED",
+        null,
         acceptanceId,
         "",
         resolverAccountId

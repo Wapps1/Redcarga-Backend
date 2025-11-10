@@ -17,4 +17,12 @@ public interface JpaQuoteRepository extends JpaRepository<Quote, Integer>, Quote
     List<Quote> findByRequestIdAndStateCode(Integer requestId, String stateCode);
 
     List<Quote> findByRequestId(Integer requestId);
+
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Quote q SET q.stateCode = :toState WHERE q.requestId = :requestId AND q.id <> :excludedQuoteId AND q.stateCode = :fromState")
+    int updateStateForRequestExcept(@org.springframework.data.repository.query.Param("requestId") Integer requestId,
+                                    @org.springframework.data.repository.query.Param("excludedQuoteId") Integer excludedQuoteId,
+                                    @org.springframework.data.repository.query.Param("fromState") String fromState,
+                                    @org.springframework.data.repository.query.Param("toState") String toState);
 }

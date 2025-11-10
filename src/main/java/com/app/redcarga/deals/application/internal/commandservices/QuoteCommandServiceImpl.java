@@ -23,6 +23,8 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     private final NotificationsPort notificationsPort;
     private final RequestFacade requestsFacade;
     private final ChatParticipantGateway chatParticipantGateway;
+    private final com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway chatMessageGateway;
+    private final com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter chatOutboxAdapter;
 
     @Override
     @Transactional
@@ -98,4 +100,41 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
 
         // TODO: idempotency logging / outbox event if required
     }
+
+    @Override
+    @Transactional
+    public void rejectQuote(Integer quoteId, Integer rejectedBy) {
+        Quote quote = quoteRepository.findById(quoteId)
+                .orElseThrow(() -> new DomainException("quote_not_found"));
+
+        String previousState = quote.getStateCode();
+
+        // mark this quote as RECHAZADA (idempotent)
+        if (!"RECHAZADA".equals(previousState)) {
+            quote.setStateCode("RECHAZADA");
+            quoteRepository.save(quote);
+        }
+
+        // persist simple system chat message for the rejected quote
+        int messageId = chatMessageGateway.insertSystemMessage(
+                quote.getId(),
+                "QUOTE_REJECTED",
+                null,
+                null,
+                "Cotización rechazada",
+                rejectedBy
+        );
+        // snapshot outbox for WS push
+        var dto = chatMessageGateway.findAfter(quote.getId(), messageId - 1, 1).stream().findFirst().orElse(null);
+        if (dto != null) chatOutboxAdapter.persistSystemMessageOutbox(dto);
+
+        // If previously accepted, move other quotes EN_ESPERA -> TRATO
+        if ("ACEPTADA".equals(previousState)) {
+            Integer requestId = quote.getRequestId();
+            quoteRepository.updateStateForRequestExcept(requestId, quote.getId(), "EN_ESPERA", "TRATO");
+            // per requirement: do NOT notify these other quotes
+        }
+    }
+
+
 }
