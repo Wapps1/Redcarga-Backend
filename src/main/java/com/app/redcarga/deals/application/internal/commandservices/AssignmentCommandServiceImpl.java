@@ -13,6 +13,7 @@ import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -78,6 +79,30 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
             it.setCompletedAt(null);
             it.setAssignmentId(null);
             itemRepository.save(it);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void editAssignment(Integer quoteId, Integer driverId, Integer vehicleId, Integer version, Integer actorAccountId) {
+        Quote quote = quoteRepository.findById(quoteId).orElseThrow(() -> new DomainException("quote_not_found"));
+        if (!"ACEPTADA".equals(quote.getStateCode())) throw new DomainException("quote_not_accepted");
+
+        Assignment a = assignmentRepository.findByQuoteId(quoteId).orElseThrow(() -> new DomainException("assignment_not_found"));
+
+        if (a.getVersion() == null || !a.getVersion().equals(version)) {
+            throw new DomainException("assignment_version_mismatch");
+        }
+
+        a.setDriverId(driverId);
+        a.setVehicleId(vehicleId);
+        a.setAssignedBy(actorAccountId);
+        a.setAssignedAt(Instant.now());
+
+        try {
+            assignmentRepository.save(a);
+        } catch (OptimisticLockingFailureException ex) {
+            throw new DomainException("assignment_optimistic_lock");
         }
     }
 }
