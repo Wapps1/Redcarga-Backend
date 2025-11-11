@@ -23,6 +23,7 @@ public class QuotesController {
 
     private final QuoteCommandService quoteCommandService;
     private final QuoteQueryService quoteQueryService;
+    private final com.app.redcarga.deals.domain.services.AssignmentCommandService assignmentCommandService;
 
     @PostMapping
     @PreAuthorize("hasRole('PROVIDER')")
@@ -96,5 +97,29 @@ public class QuotesController {
             @NotNull Integer requestItemId,
             @NotNull @DecimalMin(value = "0.0001") java.math.BigDecimal qty
     ) {}
+
+    public record AssignRequest(
+        @NotNull Integer driverId,
+        @NotNull Integer vehicleId
+    ) {}
+
+    @PostMapping("/{quoteId}/assignment")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<?> assign(@PathVariable Integer quoteId,
+                    @Valid @RequestBody AssignRequest body,
+                    JwtAuthenticationToken principal) {
+    Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+    assignmentCommandService.assignToQuote(quoteId, body.driverId(), body.vehicleId(), accountId);
+    return ResponseEntity.ok(java.util.Map.of("ok", true));
+    }
+
+    @DeleteMapping("/{quoteId}/assignment")
+    @PreAuthorize("hasRole('PROVIDER')")
+    public ResponseEntity<?> unassign(@PathVariable Integer quoteId,
+                      JwtAuthenticationToken principal) {
+    Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+    assignmentCommandService.unassignFromQuote(quoteId, accountId);
+    return ResponseEntity.ok(java.util.Map.of("ok", true));
+    }
 }
 

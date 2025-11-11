@@ -95,8 +95,18 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
             throw new org.springframework.orm.ObjectOptimisticLockingFailureException(Quote.class, quoteId);
         }
 
-        // Domain transition
-        quote.startNegotiation();
+        // Domain transition: decide TRATO vs EN_ESPERA based on request snapshot
+        var snapOpt = requestsFacade.getAcceptanceSnapshot(quote.getRequestId());
+        if (snapOpt.isEmpty()) {
+            throw new DomainException("request_not_found");
+        }
+        var snap = snapOpt.get();
+        // if request already has an accepted_quote and request.status_id == 1 -> EN_ESPERA
+        if (snap.acceptedQuoteId() != null && Integer.valueOf(1).equals(snap.statusId())) {
+            quote.setStateCode("EN_ESPERA");
+        } else {
+            quote.startNegotiation();
+        }
         quoteRepository.save(quote);
 
         // Ensure chat participants: requester (actor) and provider (quote creator)
