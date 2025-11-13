@@ -104,6 +104,11 @@ public class DealsExceptionHandler {
         return error("invalid_input", HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
+    @ExceptionHandler(com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException.class)
+    public ResponseEntity<Object> onChecklistDependency(com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException ex) {
+        return error(ex.getCode(), HttpStatus.UNPROCESSABLE_ENTITY, ex.getMissing());
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DealsExceptionHandler.class);
 
     /** DEV helper: devuelve message y loggea stacktrace para 500 */ 
