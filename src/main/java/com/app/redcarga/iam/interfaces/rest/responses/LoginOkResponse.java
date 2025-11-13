@@ -26,6 +26,7 @@ public record LoginOkResponse(
             String username,
             String email,
             boolean emailVerified,
-            long updatedAt
+            long updatedAt,
+            Integer companyId
     ) {}
 }

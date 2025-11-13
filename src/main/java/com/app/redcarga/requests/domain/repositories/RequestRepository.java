@@ -10,4 +10,9 @@ public interface RequestRepository {
     Optional<Request> findById(Integer id);
     boolean existsById(Integer id);
     List<Request> findAllByRequesterAccountId(Integer requesterAccountId);
+
+    /**
+     * Carga detallada con ítems e imágenes para evitar LazyInitializationException.
+     */
+    Optional<Request> findByIdWithItemsAndImages(Integer id);
 }

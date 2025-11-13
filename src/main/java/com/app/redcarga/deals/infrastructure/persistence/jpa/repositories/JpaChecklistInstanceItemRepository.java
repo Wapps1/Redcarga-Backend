@@ -14,10 +14,4 @@ public interface JpaChecklistInstanceItemRepository extends JpaRepository<Checkl
 	default java.util.List<ChecklistInstanceItem> insertAll(java.util.List<ChecklistInstanceItem> items) {
 		return saveAll(items);
 	}
-
-	@Query("select i from ChecklistInstanceItem i where i.instance.instanceId = :instanceId and i.code = :code")
-	Optional<ChecklistInstanceItem> findByInstanceIdAndCode(@Param("instanceId") Integer instanceId, @Param("code") String code);
-
-	@Query("select i.code from ChecklistInstanceItem i where i.instance.instanceId = :instanceId and i.code in :codes and i.statusCode <> 'DONE'")
-	List<String> findCodesNotDoneByInstanceIdAndCodes(@Param("instanceId") Integer instanceId, @Param("codes") java.util.List<String> codes);
 }

@@ -28,10 +28,11 @@ import com.app.redcarga.requests.interfaces.rest.responses.RequestListItemRespon
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/requests")
-@PreAuthorize("hasRole('CLIENT')")
+@PreAuthorize("hasAnyRole('CLIENT','PROVIDER')")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "iam")
 public class RequestsController {
@@ -41,6 +42,7 @@ public class RequestsController {
     private final TokenClaims claims;
     private final IdentityPersonService identity;
 
+    @PreAuthorize("hasRole('CLIENT')")
     @PostMapping("/create-request")
     public ResponseEntity<RequestCreatedResponse> create(@Valid @RequestBody CreateRequestRequest body) {
         body.origin().validate();
@@ -75,16 +77,12 @@ public class RequestsController {
         return ResponseEntity.ok(new RequestCreatedResponse(id));
     }
 
+    @PreAuthorize("hasAnyRole('CLIENT','PROVIDER')")
     @GetMapping("/{requestId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<RequestDetailResponse> getById(@PathVariable Integer requestId) {
-        int accountId = claims.accountIdClaim()
-                .orElseThrow(() -> new AccessDeniedException("account_id_missing"));
-
-        Request req = queryService.findById(requestId)
+        Request req = queryService.findDetailById(requestId)
                 .orElseThrow(() -> new DomainException("request_not_found"));
-
-        if (!Integer.valueOf(accountId).equals(req.getRequesterAccountId()))
-            throw new AccessDeniedException("not_owner");
 
         // ACL a Identity para traer el DNI (no se guarda en BD)
         var person = identity.getByAccountId(req.getRequesterAccountId());
@@ -165,6 +163,7 @@ public class RequestsController {
     }
 
     @Operation(summary = "Get the list of requests (CLIENT)")
+    @PreAuthorize("hasRole('CLIENT')")
     @GetMapping
     public ResponseEntity<List<RequestListItemResponse>> listMine() {
         int accountId = claims.accountIdClaim()
