@@ -75,4 +75,18 @@ public class PgRequestRepository implements RequestAcceptanceRepository {
     if (rows.isEmpty()) throw new DomainException("request_not_found");
     // otherwise: accepted_quote_id is either null or different than quoteId => no action needed
     }
+
+    @Override
+    public java.util.Optional<Integer> findAcceptedQuoteId(Integer requestId) {
+        if (requestId == null) return java.util.Optional.empty();
+        var rows = jdbc.queryForList(
+                "SELECT accepted_quote_id FROM requests.requests WHERE request_id = :requestId",
+                Map.of("requestId", requestId)
+        );
+        if (rows.isEmpty()) return java.util.Optional.empty();
+        Object v = rows.get(0).get("accepted_quote_id");
+        if (v == null) return java.util.Optional.empty();
+        Integer id = (v instanceof Integer) ? (Integer) v : Integer.valueOf(v.toString());
+        return java.util.Optional.of(id);
+    }
 }

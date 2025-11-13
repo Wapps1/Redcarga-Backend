@@ -10,6 +10,7 @@ import com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter;
 import com.app.redcarga.deals.infrastructure.outbound.DealsOutboxPublisher;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import com.app.redcarga.shared.events.requests.RequestAcceptedEvent;
+import com.app.redcarga.deals.domain.services.ChecklistInstanceCommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     private final DealsChatOutboxAdapter chatOutboxAdapter;
     private final DealsOutboxPublisher outboxPublisher;
     private final ObjectMapper objectMapper;
+    private final ChecklistInstanceCommandService checklistInstanceService;
 
     @Override
     @Transactional
@@ -91,6 +93,13 @@ public class AcceptanceCommandServiceImpl implements AcceptanceCommandService {
     if (!"ACEPTADA".equals(quote.getStateCode())) {
         quote.setStateCode("ACEPTADA");
         quoteRepository.save(quote);
+        // create checklist instance for accepted quote
+        try {
+            checklistInstanceService.createForAcceptedQuote(quote.getId());
+        } catch (Exception ex) {
+            // fail the transaction if checklist creation cannot be done (optional). For now, wrap and fail
+            throw new DomainException("checklist_creation_failed");
+        }
     }
 
     // NUEVO: mover las demás quotes en la misma request: TRATO -> EN_ESPERA

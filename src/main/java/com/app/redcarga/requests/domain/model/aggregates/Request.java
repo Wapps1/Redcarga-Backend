@@ -5,6 +5,8 @@ import com.app.redcarga.requests.domain.model.valueobjects.RequestStatusCode;
 import com.app.redcarga.requests.domain.model.valueobjects.UbigeoSnapshot;
 import com.app.redcarga.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -77,6 +79,7 @@ public class Request extends AuditableAbstractAggregateRoot<Request> {
 
     // ---- Ítems
     @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("position ASC")
     private final List<RequestItem> items = new ArrayList<>();
 
