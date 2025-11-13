@@ -23,6 +23,11 @@ public class RequestQueryServiceImpl implements RequestQueryService {
     }
 
     @Override
+    public Optional<Request> findDetailById(Integer requestId) {
+        return requests.findByIdWithItemsAndImages(requestId);
+    }
+
+    @Override
     public boolean existsById(Integer requestId) {
         return requests.existsById(requestId);
     }

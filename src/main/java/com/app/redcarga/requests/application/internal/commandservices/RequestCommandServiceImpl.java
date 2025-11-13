@@ -15,6 +15,7 @@ import com.app.redcarga.requests.domain.model.entities.RequestItem;
 import com.app.redcarga.requests.domain.model.entities.RequestItemImage;
 import com.app.redcarga.requests.domain.model.valueobjects.ProvinceCode;
 import com.app.redcarga.requests.domain.model.valueobjects.RequestStatusCode;
+import com.app.redcarga.requests.domain.repositories.RequestAcceptanceRepository;
 import com.app.redcarga.requests.domain.repositories.RequestRepository;
 import com.app.redcarga.requests.domain.services.RequestCommandService;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
@@ -43,6 +44,7 @@ public class RequestCommandServiceImpl implements RequestCommandService {
     private final Clock clock;
     private final RequestsOutboxProperties props;
     private final PlanningMatchingClient planning;
+    private final RequestAcceptanceRepository requestAcceptanceRepository;
 
     /* ============================ CREATE ============================ */
     @Override
@@ -184,5 +186,19 @@ public class RequestCommandServiceImpl implements RequestCommandService {
         } else {
             action.run();
         }
+    }
+
+    @Override
+    @Transactional
+    public void markAsAccepted(Integer requestId, Integer acceptedQuoteId) {
+        if (requestId == null || acceptedQuoteId == null) throw new IllegalArgumentException("request_or_quote_required");
+        requestAcceptanceRepository.markAsAccepted(requestId, acceptedQuoteId);
+    }
+
+    @Override
+    @Transactional
+    public void clearAcceptedQuoteIfMatches(Integer requestId, Integer quoteId) {
+        if (requestId == null || quoteId == null) throw new IllegalArgumentException("request_or_quote_required");
+        requestAcceptanceRepository.clearAcceptedQuoteIfMatches(requestId, quoteId);
     }
 }

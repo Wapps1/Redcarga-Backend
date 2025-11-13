@@ -10,4 +10,6 @@ public interface QuoteRepository {
     Optional<Quote> findById(Integer id);
     List<Quote> findByRequestIdAndStateCode(Integer requestId, String stateCode);
     List<Quote> findByRequestId(Integer requestId);
+    /** Bulk update helper: set toState for quotes in requestId except excludedQuoteId when they are currently fromState. Returns rows updated. */
+    int updateStateForRequestExcept(Integer requestId, Integer excludedQuoteId, String fromState, String toState);
 }

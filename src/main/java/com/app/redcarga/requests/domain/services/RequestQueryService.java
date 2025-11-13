@@ -7,6 +7,7 @@ import java.util.Optional;
 
 public interface RequestQueryService {
     Optional<Request> findById(Integer requestId);
+    Optional<Request> findDetailById(Integer requestId);
     boolean existsById(Integer requestId);
     List<Request> findAllByRequester(Integer requesterAccountId);
     public boolean isRequester(Integer requestId, Integer accountId);

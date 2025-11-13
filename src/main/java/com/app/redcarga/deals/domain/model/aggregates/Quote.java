@@ -9,6 +9,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -33,6 +34,7 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
     @Column(name = "currency_code", length = 3, nullable = false)
     private Currency currency = Currency.PEN;
 
+    @Setter
     @Column(name = "state_code", length = 32, nullable = false)
     private String stateCode;
 
@@ -89,6 +91,12 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
         item.updateQty(newQty);
     }
 
+    public void updateTotalAmount(java.math.BigDecimal newTotal) {
+        ensureEditable();
+        if (newTotal == null || newTotal.compareTo(java.math.BigDecimal.ZERO) <= 0) throw new DomainException("totalAmount_invalid");
+        this.totalAmount = newTotal;
+    }
+
     public void removeItem(Integer requestItemId) {
         ensureEditable();
         var it = items.stream().filter(i -> i.getRequestItemId().equals(requestItemId)).findFirst()
@@ -104,4 +112,12 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
             throw new DomainException("quote_state_not_editable");
         }
     }
+
+    /** Transition PENDIENTE -> TRATO (start negotiation). Throws DomainException if invalid. */
+    public void startNegotiation() {
+        if (this.stateCode == null) throw new DomainException("quote_state_transition_invalid");
+        if (!"PENDIENTE".equals(this.stateCode)) throw new DomainException("quote_state_transition_invalid");
+        this.stateCode = "TRATO";
+    }
+
 }

@@ -20,6 +20,7 @@ import com.app.redcarga.iam.interfaces.rest.responses.ErrorResponse;
 import com.app.redcarga.iam.interfaces.rest.responses.LoginIncompleteResponse;
 import com.app.redcarga.iam.interfaces.rest.responses.LoginOkResponse;
 import com.app.redcarga.iam.interfaces.security.CurrentAccountResolver;
+import com.app.redcarga.providers.interfaces.acl.ProvidersMembershipFacade;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,7 @@ public class IamController {
     private final AuthProviderGateway authProviderGateway;
     private final VerificationMailAppService verificationMailAppService;
     private final AccountIdentityQueryService accountIdentityQueryService;
+    private final ProvidersMembershipFacade providersMembership;
 
     public IamController(RegistrationCommandService registrationService,
                          AuthCommandService authService,
@@ -48,7 +50,8 @@ public class IamController {
                          AuthProviderGateway authProviderGateway,
                          RegistrationQueryService registrationQueryService,
                          VerificationMailAppService verificationMailAppService,
-                         AccountIdentityQueryService accountIdentityQueryService) { // NUEVO
+                         AccountIdentityQueryService accountIdentityQueryService,
+                         ProvidersMembershipFacade providersMembership) { // NUEVO
         this.registrationService = registrationService;
         this.authService = authService;
         this.bootstrapService = bootstrapService;
@@ -57,9 +60,9 @@ public class IamController {
         this.registrationQueryService = registrationQueryService; // NUEVO
         this.verificationMailAppService = verificationMailAppService;
         this.accountIdentityQueryService = accountIdentityQueryService;
+        this.providersMembership = providersMembership;
     }
 
-    // ============ Públicos ============
 
     @PostMapping("/register-start")
     public ResponseEntity<RegisterStartResult> registerStart(@RequestBody RegisterStartRequest req) {
@@ -116,6 +119,10 @@ public class IamController {
             );
         }
         var ok = (AuthCommandService.LoginOutcome.Ok) outcome;
+        Integer companyId = null;
+        if (ok.roles() != null && ok.roles().stream().anyMatch(r -> "PROVIDER".equalsIgnoreCase(r))) {
+            companyId = providersMembership.findAnyActiveCompanyIdByAccount(ok.accountId()).orElse(null);
+        }
         return ResponseEntity.ok(LoginOkResponse.of(
             ok.sessionId(),
             ok.accountId(),
@@ -127,7 +134,8 @@ public class IamController {
                 ok.account().getUsername(),
                 ok.account().getEmail(),
                 ok.account().isEmailVerified(),
-                ok.account().getUpdatedAt().getTime()
+                ok.account().getUpdatedAt().getTime(),
+                companyId
             )
         ));
     }

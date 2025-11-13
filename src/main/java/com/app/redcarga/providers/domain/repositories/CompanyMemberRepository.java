@@ -6,5 +6,10 @@ public interface CompanyMemberRepository {
     CompanyMember save(CompanyMember member);
     boolean existsActiveByAccountId(Integer accountId); // opcional para reglas futuras
     boolean existsActiveByCompanyIdAndAccountId(Integer companyId, Integer accountId);
+
+    /**
+     * Retorna alguna companyId activa para el account si existe.
+     */
+    java.util.Optional<Integer> findAnyActiveByAccount(Integer accountId);
 }
 

@@ -14,7 +14,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import jakarta.persistence.OptimisticLockException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.time.OffsetDateTime;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -81,6 +85,11 @@ public class DealsExceptionHandler {
         return switch (key) {
             case "account_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
             case "invalid_provider_role", "company_not_member", "not_member_of_company" -> error(key, HttpStatus.FORBIDDEN, null);
+            case "not_participant_of_quote", "not_request_owner", "not_chat_participant", "chat_state_not_allowed" -> error(key, HttpStatus.FORBIDDEN, null);
+            case "kind_required", "kind_invalid", "text_required", "text_empty", "text_too_long",
+                 "image_url_required", "image_url_too_long", "caption_too_long",
+                 "content_kind_invalid", "dedup_invalid" -> error(key, HttpStatus.UNPROCESSABLE_ENTITY, null);
+            case "limit_invalid", "if_match_invalid" -> error(key, HttpStatus.BAD_REQUEST, null);
             case "quote_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
             default -> error(key != null ? key : "domain_error", HttpStatus.BAD_REQUEST, null);
         };
@@ -91,8 +100,17 @@ public class DealsExceptionHandler {
         return error("invalid_input", HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
+    private static final Logger log = LoggerFactory.getLogger(DealsExceptionHandler.class);
+
+    /** DEV helper: devuelve message y loggea stacktrace para 500 */ 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> onOther(Exception ex) {
-        return error("internal_error", HttpStatus.INTERNAL_SERVER_ERROR, "unexpected");
+    public ResponseEntity<Object> onUnhandled(Exception ex) {
+        log.error("Unhandled exception in controller", ex);
+        Map<String,Object> body = new LinkedHashMap<>();
+        body.put("timestamp", OffsetDateTime.now().toString());
+        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+        body.put("error", "Internal Server Error");
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 }

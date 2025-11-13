@@ -37,6 +37,7 @@ public class QuotesController {
     // Ej: GET /api/deals/quotes?requestId=123&state=PENDIENTE
     // Devuelve entidades por ahora; luego podemos mapear a DTO de view si prefieres.
     @GetMapping
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<?> listByRequest(@RequestParam("requestId") Integer requestId,
                                            @RequestParam(value = "state", required = false) String stateCode) {
         return ResponseEntity.ok(quoteQueryService.listByRequestIdAndState(requestId, stateCode));
@@ -44,6 +45,7 @@ public class QuotesController {
 
     // PATCH item quantity
     @PatchMapping("/{quoteId}/items")
+    @PreAuthorize("hasRole('PROVIDER')")
     public ResponseEntity<Void> updateItemQty(@PathVariable Integer quoteId,
                                               @RequestBody @Valid UpdateItemQtyRequest body,
                                               JwtAuthenticationToken principal) {
@@ -52,13 +54,40 @@ public class QuotesController {
         return ResponseEntity.noContent().build();
     }
 
-    // DELETE item
+    /*
     @DeleteMapping("/{quoteId}/items/{requestItemId}")
+    @PreAuthorize("hasRole('PROVIDER')")
     public ResponseEntity<Void> removeItem(@PathVariable Integer quoteId,
                                            @PathVariable Integer requestItemId,
                                            JwtAuthenticationToken principal) {
         Integer accountId = Integer.valueOf(principal.getToken().getSubject());
         quoteCommandService.removeItem(quoteId, requestItemId, accountId);
+        return ResponseEntity.noContent().build();
+    }
+    */
+
+    @PostMapping("/{quoteId}:start-negotiation")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<Void> startNegotiation(@PathVariable Integer quoteId,
+                                                 @RequestHeader(value = "If-Match") String ifMatchHeader,
+                                                 @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+                                                 JwtAuthenticationToken principal) {
+        Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+        Integer ifMatchVersion = null;
+        try {
+            ifMatchVersion = Integer.valueOf(ifMatchHeader.replace("\"", "").trim());
+        } catch (Exception ex) {
+            throw new com.app.redcarga.shared.domain.exceptions.DomainException("if_match_invalid");
+        }
+        quoteCommandService.startNegotiation(quoteId, accountId, ifMatchVersion, idempotencyKey);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{quoteId}:reject")
+    public ResponseEntity<Void> rejectQuote(@PathVariable Integer quoteId,
+                                            JwtAuthenticationToken principal) {
+        Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+        quoteCommandService.rejectQuote(quoteId, accountId);
         return ResponseEntity.noContent().build();
     }
 

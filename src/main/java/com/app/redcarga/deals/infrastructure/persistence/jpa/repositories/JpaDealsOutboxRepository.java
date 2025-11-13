@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface JpaDealsOutboxRepository extends JpaRepository<DealsOutboxEntry, Integer> {
     List<DealsOutboxEntry> findByProcessedAtIsNullOrderByCreatedAtAsc();
+
+    List<DealsOutboxEntry> findByRouteKindAndProcessedAtIsNullOrderByCreatedAtAsc(String routeKind);
 }

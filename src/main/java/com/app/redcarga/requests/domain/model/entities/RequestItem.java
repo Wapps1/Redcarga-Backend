@@ -3,6 +3,8 @@ package com.app.redcarga.requests.domain.model.entities;
 import com.app.redcarga.requests.domain.model.aggregates.Request;
 import com.app.redcarga.requests.domain.model.valueobjects.ItemName;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -60,6 +62,7 @@ public class RequestItem {
     private Integer position;
 
     @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     @OrderBy("imagePosition ASC")
     private final List<RequestItemImage> images = new ArrayList<>();
 
