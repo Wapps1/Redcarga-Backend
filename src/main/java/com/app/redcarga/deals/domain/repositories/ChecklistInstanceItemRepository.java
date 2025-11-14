@@ -12,5 +12,7 @@ public interface ChecklistInstanceItemRepository {
 
 	ChecklistInstanceItem save(ChecklistInstanceItem item);
 
-	java.util.List<String> findCodesNotDoneByInstanceIdAndCodes(Integer instanceId, java.util.List<String> codes);
+	List<String> findCodesNotDoneByInstanceIdAndCodes(Integer instanceId, java.util.List<String> codes);
+
+	Optional<ChecklistInstanceItem> findByInstanceInstanceIdAndCode(Integer instanceId, String code);
 }
