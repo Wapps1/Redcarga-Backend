@@ -91,6 +91,10 @@ public class DealsExceptionHandler {
                  "content_kind_invalid", "dedup_invalid" -> error(key, HttpStatus.UNPROCESSABLE_ENTITY, null);
             case "limit_invalid", "if_match_invalid" -> error(key, HttpStatus.BAD_REQUEST, null);
             case "quote_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
+            case "quote_not_accepted" -> error(key, HttpStatus.UNPROCESSABLE_ENTITY, null);
+            case "checklist_instance_not_found", "checklist_item_assignment_missing" -> error(key, HttpStatus.NOT_FOUND, null);
+            case "assignment_not_found" -> error(key, HttpStatus.NOT_FOUND, null);
+            case "assignment_version_mismatch", "assignment_optimistic_lock" -> error(key, HttpStatus.CONFLICT, null);
             default -> error(key != null ? key : "domain_error", HttpStatus.BAD_REQUEST, null);
         };
     }
@@ -98,6 +102,11 @@ public class DealsExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Object> onIllegalArg(IllegalArgumentException ex) {
         return error("invalid_input", HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException.class)
+    public ResponseEntity<Object> onChecklistDependency(com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException ex) {
+        return error(ex.getCode(), HttpStatus.UNPROCESSABLE_ENTITY, ex.getMissing());
     }
 
     private static final Logger log = LoggerFactory.getLogger(DealsExceptionHandler.class);

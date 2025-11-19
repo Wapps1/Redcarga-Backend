@@ -1,0 +1,3 @@
+INSERT INTO deals.catalog_chat_subtype(code)
+VALUES ('PAYMENT_MADE'), ('PAYMENT_CONFIRMED')
+ON CONFLICT (code) DO NOTHING;

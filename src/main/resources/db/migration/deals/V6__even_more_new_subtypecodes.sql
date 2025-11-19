@@ -1,0 +1,3 @@
+INSERT INTO deals.catalog_chat_subtype(code)
+VALUES ('DOC_GRE_REMITENTE'), ('DOC_GRE_TRANSPORTISTA')
+ON CONFLICT (code) DO NOTHING;

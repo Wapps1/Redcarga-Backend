@@ -1,0 +1,3 @@
+INSERT INTO deals.catalog_chat_subtype(code)
+VALUES ('SHIPMENT_SENT'), ('SHIPMENT_RECEIVED')
+ON CONFLICT (code) DO NOTHING;
