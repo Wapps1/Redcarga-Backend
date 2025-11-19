@@ -1,5 +1,6 @@
-package com.app.redcarga.deals.application.internal.services;
+package com.app.redcarga.deals.application.internal.queryservices;
 
+import com.app.redcarga.deals.domain.services.ChecklistDependencyQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -10,7 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ChecklistDependencyService {
+public class ChecklistDependencyQueryServiceImpl implements ChecklistDependencyQueryService {
 
     private final ChecklistTemplateDependencyRepository templateDependencyRepository;
     private final ChecklistInstanceItemRepository instanceItemRepository;

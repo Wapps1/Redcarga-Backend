@@ -1,6 +1,6 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
-import com.app.redcarga.deals.application.internal.services.ChecklistDependencyService;
+import com.app.redcarga.deals.application.internal.queryservices.ChecklistDependencyQueryServiceImpl;
 import com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
 import com.app.redcarga.deals.domain.model.entities.ChecklistInstance;
@@ -8,6 +8,7 @@ import com.app.redcarga.deals.domain.model.entities.ChecklistInstanceItem;
 import com.app.redcarga.deals.domain.repositories.ChecklistInstanceItemRepository;
 import com.app.redcarga.deals.domain.repositories.ChecklistInstanceRepository;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
+import com.app.redcarga.deals.domain.services.ChecklistDependencyQueryService;
 import com.app.redcarga.deals.domain.services.ChecklistItemCommandService;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class ChecklistItemCommandServiceImpl implements ChecklistItemCommandServ
     private final QuoteRepository quoteRepository;
     private final ChecklistInstanceRepository instanceRepository;
     private final ChecklistInstanceItemRepository itemRepository;
-    private final ChecklistDependencyService dependencyService;
+    private final ChecklistDependencyQueryService dependencyService;
 
     @Override
     @Transactional

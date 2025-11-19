@@ -1,11 +1,8 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
 import com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway;
-import com.app.redcarga.deals.application.internal.services.ChecklistDependencyService;
-import com.app.redcarga.deals.domain.exceptions.ChecklistDependencyException;
+import com.app.redcarga.deals.application.internal.queryservices.ChecklistDependencyQueryServiceImpl;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
-import com.app.redcarga.deals.domain.model.entities.ChecklistInstance;
-import com.app.redcarga.deals.domain.model.entities.ChecklistInstanceItem;
 import com.app.redcarga.deals.domain.repositories.ChecklistInstanceItemRepository;
 import com.app.redcarga.deals.domain.repositories.ChecklistInstanceRepository;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
@@ -16,9 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class PaymentCommandServiceImpl implements PaymentCommandService {
@@ -26,7 +20,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private final QuoteRepository quoteRepository;
     private final ChecklistInstanceRepository instanceRepository;
     private final ChecklistInstanceItemRepository itemRepository;
-    private final ChecklistDependencyService dependencyService;
+    private final ChecklistDependencyQueryServiceImpl dependencyService;
     private final ChatMessageGateway chatMessageGateway;
     private final DealsChatOutboxAdapter chatOutboxAdapter; // <-- añadido
     private final com.app.redcarga.deals.domain.services.ChecklistItemCommandService checklistItemCommandService;
