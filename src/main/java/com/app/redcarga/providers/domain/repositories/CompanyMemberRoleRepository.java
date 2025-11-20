@@ -8,5 +8,5 @@ public interface CompanyMemberRoleRepository {
     CompanyMemberRole save(CompanyMemberRole role);
 
     List<String> findActiveRoleCodes(int companyId, int accountId);
-    boolean hasAnyActiveRole(int companyId, int accountId, java.util.List<String> roleCodes);
+    boolean hasAnyActiveRole(int companyId, int accountId, List<String> roleCodes);
 }

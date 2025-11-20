@@ -4,8 +4,10 @@ import com.app.redcarga.providers.application.internal.outboundservices.acl.IamA
 import com.app.redcarga.providers.domain.services.CompanyQueryService;
 import com.app.redcarga.providers.application.internal.views.CompanyView;
 import com.app.redcarga.providers.domain.model.commands.VerifyAndRegisterCompanyCommand;
+import com.app.redcarga.providers.domain.model.commands.VerifyAndRegisterOperatorCommand;
 import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
 import com.app.redcarga.providers.domain.services.CompanyCommandService;
+import com.app.redcarga.providers.interfaces.rest.requests.VerifyAndRegisterOperatorRequest;
 import com.app.redcarga.providers.interfaces.rest.requests.VerifyAndRegisterCompanyRequest;
 import com.app.redcarga.providers.interfaces.rest.responses.VerifyAndRegisterCompanyResponse;
 import com.app.redcarga.shared.infrastructure.security.AccountOwnershipGuard;
@@ -16,6 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,6 +56,26 @@ public class ProvidersController {
 
         Integer companyId = commandService.handle(cmd);
         return ResponseEntity.ok(new VerifyAndRegisterCompanyResponse(true, companyId));
+    }
+
+    @SecurityRequirement(name = "iam")
+    @Operation(summary = "Register an operator for a company (admin must be the caller)")
+    @PostMapping("/company/{companyId}/operators")
+    public ResponseEntity<String> registerOperator(@PathVariable Integer companyId,
+                                                   @Valid @RequestBody VerifyAndRegisterOperatorRequest body,
+                                                   JwtAuthenticationToken principal) {
+
+        Integer adminId = Integer.valueOf(principal.getToken().getSubject());
+
+        var cmd = new VerifyAndRegisterOperatorCommand(
+                adminId,
+                body.operatorId(),
+                companyId,
+                body.roleId()
+        );
+
+        commandService.registerOperator(cmd);
+        return ResponseEntity.ok("ok");
     }
 
     @SecurityRequirement(name = "iam")
