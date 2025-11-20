@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotNull;
 
 public record VerifyAndRegisterOperatorRequest(
         @NotNull Integer operatorId,
-        @NotNull String roleId
+        @NotNull Integer roleId
 ) {}

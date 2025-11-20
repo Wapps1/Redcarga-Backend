@@ -17,7 +17,7 @@ public class ProvidersMembershipClient {
         return providersMembershipFacade.isMemberOfCompany(companyId, accountId);
     }
 
-    public boolean hasAnyRole(int companyId, int accountId, String... roleCodes) {
+    public boolean hasAnyRole(int companyId, int accountId, int... roleCodes) {
         return providersMembershipFacade.hasAnyRole(companyId, accountId, roleCodes);
     }
 }

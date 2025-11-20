@@ -11,6 +11,9 @@ import java.util.Optional;
 public interface JpaCompanyRoleCatalogRepository
         extends JpaRepository<CompanyRole, Integer>, CompanyRoleCatalogRepository {
 
+    /*
     @Override
     Optional<CompanyRole> findByCode(String code);
+     */
+
 }

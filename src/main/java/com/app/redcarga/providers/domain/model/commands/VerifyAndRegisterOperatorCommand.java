@@ -4,5 +4,5 @@ public record VerifyAndRegisterOperatorCommand (
     Integer adminId,
     Integer operatorId,
     Integer companyId,
-    String roleId
+    Integer roleId
 ){}

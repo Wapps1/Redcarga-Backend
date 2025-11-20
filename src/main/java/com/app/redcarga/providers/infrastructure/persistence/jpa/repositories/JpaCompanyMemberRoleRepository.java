@@ -38,9 +38,9 @@ public interface JpaCompanyMemberRoleRepository
            where m.id.companyId = :companyId
              and m.id.accountId = :accountId
              and m.status = com.app.redcarga.providers.domain.model.valueobjects.MembershipStatus.ACTIVE
-             and r.code in :roleCodes
+             and r.roleId in :roleCodes
            """)
     boolean hasAnyActiveRole(@Param("companyId") int companyId,
                              @Param("accountId") int accountId,
-                             @Param("roleCodes") List<String> roleCodes);
+                             @Param("roleCodes") List<Integer> roleCodes);
 }

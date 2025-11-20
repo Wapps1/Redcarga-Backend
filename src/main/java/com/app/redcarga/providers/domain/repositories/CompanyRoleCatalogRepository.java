@@ -5,5 +5,7 @@ import com.app.redcarga.providers.domain.model.entities.CompanyRole;
 import java.util.Optional;
 
 public interface CompanyRoleCatalogRepository {
-    Optional<CompanyRole> findByCode(String code); // "ADMIN"
+    //Optional<CompanyRole> findByCode(String code); // "ADMIN"
+
+    Optional<CompanyRole> findById(Integer id);
 }

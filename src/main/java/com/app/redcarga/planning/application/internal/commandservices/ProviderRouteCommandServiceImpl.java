@@ -31,7 +31,7 @@ public class ProviderRouteCommandServiceImpl implements ProviderRouteCommandServ
     @Transactional
     public Integer register(RegisterProviderRouteCommand cmd, int actorAccountId) {
         // A) Autorización
-        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of("ADMIN"));
+        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of(1));
         if (!ok) throw new DomainException("forbidden_company_admin_required");
 
         // B) Igual que el service base
@@ -69,7 +69,7 @@ public class ProviderRouteCommandServiceImpl implements ProviderRouteCommandServ
     @Transactional
     public void update(UpdateProviderRouteCommand cmd, int actorAccountId) {
         // A) Autorización (ADMIN de la company)
-        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of("ADMIN"));
+        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of(1));
         if (!ok) throw new DomainException("forbidden_company_admin_required");
 
         var route = routes.findById(cmd.routeId())
@@ -120,7 +120,7 @@ public class ProviderRouteCommandServiceImpl implements ProviderRouteCommandServ
     @Transactional
     public void delete(DeleteProviderRouteCommand cmd, int actorAccountId) {
         // A) Autorización (ADMIN de la company)
-        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of("ADMIN"));
+        boolean ok = memberships.hasAnyRole(cmd.companyId(), actorAccountId, List.of(1));
         if (!ok) throw new DomainException("forbidden_company_admin_required");
 
         var route = routes.findById(cmd.routeId())

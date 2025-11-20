@@ -25,7 +25,7 @@ public class CompanyMembershipQueryServiceImpl implements CompanyMembershipQuery
     }
 
     @Override
-    public boolean hasAnyRole(int companyId, int accountId, List<String> roleCodes) {
+    public boolean hasAnyRole(int companyId, int accountId, List<Integer> roleCodes) {
         if (roleCodes == null || roleCodes.isEmpty()) return false;
         return roleRepo.hasAnyActiveRole(companyId, accountId, roleCodes);
     }

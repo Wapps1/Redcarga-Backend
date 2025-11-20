@@ -35,7 +35,7 @@ public class CompanyCommandServiceImpl implements CompanyCommandService {
     private static final String REQUIRED_SIGNUP_STATE = "BASIC_PROFILE_COMPLETED";
     private static final String REGISTER_SIGNUP_STATE = "NONE";
     private static final String REQUIRED_ROLE_CODE    = "PROVIDER";
-    private static final String ADMIN_ROLE_CODE       = "ADMIN";
+    private static final Integer ADMIN_ROLE_CODE       = 1;
 
     private final CompanyRepository companyRepo;
     private final CompanyMemberRepository memberRepo;
@@ -79,7 +79,7 @@ public class CompanyCommandServiceImpl implements CompanyCommandService {
         // 4) Persistencia: Member + ADMIN
         var member = memberRepo.save(CompanyMember.joinAsActive(company, c.accountId()));
 
-        CompanyRole admin = roleCatalogRepo.findByCode(ADMIN_ROLE_CODE)
+        CompanyRole admin = roleCatalogRepo.findById(ADMIN_ROLE_CODE)
                 .orElseThrow(() -> new IllegalStateException("seed missing: company_roles 'ADMIN'"));
 
         memberRoleRepo.save(CompanyMemberRole.grant(member, admin));
@@ -136,7 +136,7 @@ public class CompanyCommandServiceImpl implements CompanyCommandService {
         // 4) Persistencia: Member + ROLE (ej. DRIVER)
         var member = memberRepo.save(CompanyMember.joinAsActive(company, c.operatorId()));
 
-        CompanyRole role = roleCatalogRepo.findByCode(c.roleId())
+        CompanyRole role = roleCatalogRepo.findById(c.roleId())
                 .orElseThrow(() -> new IllegalStateException("seed missing: company_roles 'DRIVER'"));
 
         memberRoleRepo.save(CompanyMemberRole.grant(member, role));
