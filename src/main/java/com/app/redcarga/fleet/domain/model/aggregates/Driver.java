@@ -22,17 +22,8 @@ public class Driver extends AuditableAbstractAggregateRoot<Driver> {
     @Column(name = "company_id", nullable = false)
     private Integer companyId;
 
-    @Column(name = "first_name", nullable = false, length = 120)
-    private String firstName;
-
-    @Column(name = "last_name", nullable = false, length = 120)
-    private String lastName;
-
-    @Column(name = "email", length = 200)
-    private String email;
-
-    @Embedded
-    private Phone phone;
+    @Column(name = "account_id", nullable = false, length = 120)
+    private Integer accountId;
 
     @Column(name = "license_number", length = 32)
     private String licenseNumber;
@@ -42,29 +33,19 @@ public class Driver extends AuditableAbstractAggregateRoot<Driver> {
 
     public static Driver create(
             Integer companyId,
-            String firstName,
-            String lastName,
-            String email,
-            String phone,
+            Integer accountId,
             String licenseNumber,
             Boolean active
     ) {
         Driver d = new Driver();
         d.companyId = requirePositive(companyId, "companyId");
-        d.firstName = normalizeRequired(firstName, 1, 120, "firstName");
-        d.lastName = normalizeRequired(lastName, 1, 120, "lastName");
-        d.email = normalizeEmail(email);
-        d.phone = (phone != null && !phone.isBlank()) ? Phone.of(phone) : null;
+        d.accountId= requirePositive(accountId, "accountId");
         d.licenseNumber = (licenseNumber != null && !licenseNumber.isBlank()) ? LicenseNumber.of(licenseNumber).value() : null;
         d.active = (active != null) ? active : true;
         return d;
     }
 
-    public void update(String firstName, String lastName, String email, String phone, String licenseNumber, Boolean active) {
-        if (firstName != null && !firstName.isBlank()) this.firstName = normalizeRequired(firstName, 1, 120, "firstName");
-        if (lastName != null && !lastName.isBlank()) this.lastName = normalizeRequired(lastName, 1, 120, "lastName");
-        if (email != null) this.email = normalizeEmail(email);
-        if (phone != null) this.phone = (!phone.isBlank()) ? Phone.of(phone) : null;
+    public void update(String licenseNumber, Boolean active) {
         if (licenseNumber != null) this.licenseNumber = (!licenseNumber.isBlank()) ? LicenseNumber.of(licenseNumber).value() : null;
         if (active != null) this.active = active;
     }
@@ -89,5 +70,3 @@ public class Driver extends AuditableAbstractAggregateRoot<Driver> {
         return v;
     }
 }
-
-

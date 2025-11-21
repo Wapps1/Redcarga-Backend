@@ -12,5 +12,3 @@ public interface DriverRepository {
     List<Driver> findAllByCompanyId(Integer companyId);
     void delete(Driver driver);
 }
-
-
