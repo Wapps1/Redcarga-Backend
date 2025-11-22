@@ -1,9 +1,13 @@
 package com.app.redcarga.deals.interfaces.rest;
 
+import com.app.redcarga.deals.domain.model.aggregates.Quote;
+import com.app.redcarga.deals.domain.model.entities.Assignment;
 import com.app.redcarga.deals.domain.services.AssignmentCommandService;
 import com.app.redcarga.deals.domain.services.AssignmentQueryService;
 import com.app.redcarga.deals.domain.services.QuoteCommandService;
 import com.app.redcarga.deals.domain.services.QuoteQueryService;
+import com.app.redcarga.deals.interfaces.rest.requests.AssignEditRequest;
+import com.app.redcarga.deals.interfaces.rest.requests.AssignRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,6 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/deals")
 @RequiredArgsConstructor
@@ -28,16 +34,7 @@ public class AssignmentsController {
     private final AssignmentCommandService assignmentCommandService;
     private final AssignmentQueryService assignmentQueryService;
 
-    public record AssignRequest(
-            @NotNull Integer driverId,
-            @NotNull Integer vehicleId
-    ) {}
 
-    public record AssignEditRequest(
-        @NotNull Integer driverId,
-        @NotNull Integer vehicleId,
-        @NotNull Integer version
-    ) {}
 
     @Operation(summary = "Assign a fleet to a quote")
     @ApiResponses({
@@ -94,5 +91,22 @@ public class AssignmentsController {
     return assignmentQueryService.getVersionByQuoteId(quoteId)
         .map(v -> ResponseEntity.ok(java.util.Map.of("version", v)))
         .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "Get all accepted quotes that a driver must attend")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "List of accepted quotes returned"),
+            @ApiResponse(responseCode = "403", description = "Not authorized to view these quotes", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content)
+    })
+    @GetMapping("/companies/{companyId}/drivers/{driverId}/assignments/active")
+    public ResponseEntity<List<Assignment>> getAcceptedAssignmentsForDriver(
+            @PathVariable Integer companyId,
+            @PathVariable Integer driverId,
+            JwtAuthenticationToken principal) {
+
+        Integer accountId = Integer.valueOf(principal.getToken().getSubject());
+        List<Assignment> assignments = assignmentQueryService.getAcceptedAssignmentsForDriver(companyId, driverId, accountId);
+        return ResponseEntity.ok(assignments);
     }
 }

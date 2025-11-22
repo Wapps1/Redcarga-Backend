@@ -4,6 +4,8 @@ import com.app.redcarga.providers.interfaces.acl.ProvidersMembershipFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Outbound ACL client: deals BC consumes providers BC membership facade.
  */
@@ -19,5 +21,9 @@ public class ProvidersMembershipClient {
 
     public boolean hasAnyRole(int companyId, int accountId, int... roleCodes) {
         return providersMembershipFacade.hasAnyRole(companyId, accountId, roleCodes);
+    }
+
+    public List<String> getActiveRoleCodes(int companyId, int accountId) {
+        return providersMembershipFacade.getActiveRoleCodes(companyId, accountId);
     }
 }

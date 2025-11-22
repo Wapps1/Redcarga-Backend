@@ -27,6 +27,6 @@ public record LoginOkResponse(
             String email,
             boolean emailVerified,
             long updatedAt,
-            Integer companyId
-    ) {}
+            Integer companyId,
+            List<String> companyRoles) {}
 }

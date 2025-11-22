@@ -13,6 +13,8 @@ public interface DriverQueryService {
 
     // sobrecarga usada para validar que un accountId pertenece a la compañía
     List<DriverView> findAllByCompany(Integer companyId, Integer accountId);
+
+    boolean existsByIdAndAccountId(Integer accountId, Integer driverId);
 }
 
 

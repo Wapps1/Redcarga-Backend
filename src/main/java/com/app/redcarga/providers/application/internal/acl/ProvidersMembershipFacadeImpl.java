@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -35,5 +36,10 @@ class ProvidersMembershipFacadeImpl implements ProvidersMembershipFacade {
     @Override
     public Optional<Integer> findAnyActiveCompanyIdByAccount(int accountId) {
         return memberRepo.findAnyActiveByAccount(accountId);
+    }
+
+    @Override
+    public List<String> getActiveRoleCodes(int companyId, int accountId) {
+        return queryService.getActiveRoleCodes(companyId, accountId);
     }
 }

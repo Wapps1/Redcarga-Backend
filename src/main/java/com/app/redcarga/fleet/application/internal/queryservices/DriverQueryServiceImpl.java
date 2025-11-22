@@ -59,6 +59,10 @@ public class DriverQueryServiceImpl implements DriverQueryService {
         return out;
     }
 
+    public boolean existsByIdAndAccountId(Integer accountId, Integer driverId){
+        return drivers.existsByIdAndAccountId(accountId, driverId);
+    }
+
     // función simple: por un Driver obtiene optional del ACL por accountId y arma el DriverView
     private DriverView mapToView(Driver d) {
         IdentityPersonSnapshot p = null;
