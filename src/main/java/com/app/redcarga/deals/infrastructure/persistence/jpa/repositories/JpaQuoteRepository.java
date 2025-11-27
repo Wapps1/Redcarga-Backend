@@ -34,4 +34,7 @@ public interface JpaQuoteRepository extends JpaRepository<Quote, Integer>, Quote
                                     @Param("fromState") String fromState,
                                     @Param("toState") String toState);
 
+    @Query("SELECT q.version FROM Quote q WHERE q.id = :quoteId")
+    Optional<Integer> findVersionByQuoteId(@Param("quoteId") Integer quoteId);
+
 }

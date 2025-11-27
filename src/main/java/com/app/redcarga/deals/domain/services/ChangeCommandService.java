@@ -17,4 +17,6 @@ public interface ChangeCommandService {
      * - If TRATO or EN_ESPERA -> create Change (APLICADO) and return changeId
      */
     Integer decideAndApplyChange(Integer quoteId, List<ChangeItem> items, Integer actorAccountId, Integer ifMatchVersion, String idempotencyKey);
+
+    Integer decideOnProposedChange(Integer changeId, boolean accept, Integer actorAccountId, Integer ifMatchVersion);
 }

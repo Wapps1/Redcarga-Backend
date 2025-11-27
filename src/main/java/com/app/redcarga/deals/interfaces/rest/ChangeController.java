@@ -1,8 +1,13 @@
 package com.app.redcarga.deals.interfaces.rest;
 
+import com.app.redcarga.deals.domain.model.entities.Change;
 import com.app.redcarga.deals.domain.services.ChangeCommandService;
+import com.app.redcarga.deals.domain.services.ChangeQueryService;
 import com.app.redcarga.deals.interfaces.rest.requests.ChangeRequest;
+import com.app.redcarga.deals.interfaces.rest.requests.DecisionRequest;
 import com.app.redcarga.deals.interfaces.rest.responses.ChangeResponse;
+import com.app.redcarga.deals.interfaces.rest.responses.ChangeSimpleResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping(path = "/api/deals/quotes/{quoteId}/changes", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
@@ -21,6 +28,7 @@ import jakarta.validation.Valid;
 public class ChangeController {
 
     private final ChangeCommandService changeCommandService;
+    private final ChangeQueryService changeQueryService;
 
     @Operation(summary = "Apply changes (LIBRE) to a quote")
     @ApiResponses({
@@ -30,7 +38,7 @@ public class ChangeController {
             @ApiResponse(responseCode = "409", description = "Conflict / version mismatch")
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ChangeResponse applyChanges(
+    public ChangeSimpleResponse applyChanges(
             @PathVariable Integer quoteId,
             @RequestHeader(value = "If-Match", required = false) Integer ifMatch,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
@@ -39,6 +47,25 @@ public class ChangeController {
     ) {
         Integer actorAccountId = Integer.valueOf(principal.getToken().getSubject());
     Integer changeId = changeCommandService.decideAndApplyChange(quoteId, request.toDomainItems(), actorAccountId, ifMatch, idempotencyKey);
-        return new ChangeResponse(changeId);
+        return new ChangeSimpleResponse(changeId);
     }
+
+    @PostMapping("/{changeId}/decision")
+    public ResponseEntity<Void> decideChange(
+            @PathVariable Integer changeId,
+            @RequestBody DecisionRequest req,
+            @RequestHeader("X-Actor-Account-Id") Integer actorAccountId,
+            @RequestHeader(value = "If-Match", required = false) Integer ifMatchVersion
+    ) {
+        changeCommandService.decideOnProposedChange(changeId, req.accept, actorAccountId, ifMatchVersion);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{changeId}")
+    public ResponseEntity<ChangeResponse> getChange(@PathVariable Integer changeId) {
+        return changeQueryService.getChangeWithItems(changeId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 }

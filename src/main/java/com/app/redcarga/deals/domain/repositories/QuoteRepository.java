@@ -21,4 +21,6 @@ public interface QuoteRepository {
 
     List<Quote> findByRequestIdIn(List<Integer> requestIds);
     List<Quote> findByRequestIdInAndStateCode(List<Integer> requestIds, String stateCode);
+
+    Optional<Integer> findVersionByQuoteId(Integer quoteId);
 }

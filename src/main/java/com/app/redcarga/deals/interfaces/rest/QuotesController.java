@@ -7,6 +7,7 @@ import com.app.redcarga.deals.interfaces.rest.responses.CreateQuoteResponse;
 import com.app.redcarga.deals.interfaces.rest.responses.QuoteDetailResponse;
 import com.app.redcarga.deals.interfaces.rest.responses.QuoteResponsesMapper;
 import com.app.redcarga.deals.interfaces.rest.responses.QuoteGeneralSummaryResponse;
+import com.app.redcarga.deals.interfaces.rest.responses.QuoteVersionResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -106,6 +107,13 @@ public class QuotesController {
         Integer accountId = Integer.valueOf(principal.getToken().getSubject());
         quoteCommandService.rejectQuote(quoteId, accountId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{quoteId}/version")
+    public ResponseEntity<QuoteVersionResponse> getQuoteVersion(@PathVariable Integer quoteId) {
+        var version = quoteQueryService.getQuoteVersion(quoteId)
+                .orElseThrow(() -> new IllegalArgumentException("Quote not found: " + quoteId));
+        return ResponseEntity.ok(new QuoteVersionResponse(quoteId, version));
     }
 
     // Inline request para PATCH quantity
