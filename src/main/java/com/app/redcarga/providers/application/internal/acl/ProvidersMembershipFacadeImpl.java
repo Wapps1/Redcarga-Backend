@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -23,13 +25,21 @@ class ProvidersMembershipFacadeImpl implements ProvidersMembershipFacade {
     }
 
     @Override
-    public boolean hasAnyRole(int companyId, int accountId, String... roleCodes) {
-        var codes = (roleCodes == null) ? java.util.List.<String>of() : Arrays.asList(roleCodes);
+    public boolean hasAnyRole(int companyId, int accountId, int... roleCodes) {
+        List<Integer> codes = (roleCodes == null)
+                ? List.of()
+                : Arrays.stream(roleCodes).boxed().toList();
+
         return queryService.hasAnyRole(companyId, accountId, codes);
     }
 
     @Override
     public Optional<Integer> findAnyActiveCompanyIdByAccount(int accountId) {
         return memberRepo.findAnyActiveByAccount(accountId);
+    }
+
+    @Override
+    public List<String> getActiveRoleCodes(int companyId, int accountId) {
+        return queryService.getActiveRoleCodes(companyId, accountId);
     }
 }

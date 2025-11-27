@@ -52,4 +52,14 @@ public class QuoteQueryServiceImpl implements QuoteQueryService {
     public List<QuoteItem> listItemsByQuoteId(Integer quoteId) {
         return quoteItemRepository.findByQuoteId(quoteId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Quote> listByRequestIdsAndState(List<Integer> requestIds, String stateCode) {
+        if (requestIds == null || requestIds.isEmpty()) return List.of();
+        if (stateCode != null && !stateCode.isBlank()) {
+            return quoteRepository.findByRequestIdInAndStateCode(requestIds, stateCode);
+        }
+        return quoteRepository.findByRequestIdIn(requestIds);
+    }
 }

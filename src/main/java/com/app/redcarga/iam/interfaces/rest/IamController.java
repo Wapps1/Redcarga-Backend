@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -120,9 +121,16 @@ public class IamController {
         }
         var ok = (AuthCommandService.LoginOutcome.Ok) outcome;
         Integer companyId = null;
+
+        List<String> companyRoles = null;
         if (ok.roles() != null && ok.roles().stream().anyMatch(r -> "PROVIDER".equalsIgnoreCase(r))) {
-            companyId = providersMembership.findAnyActiveCompanyIdByAccount(ok.accountId()).orElse(null);
+            var cidOpt = providersMembership.findAnyActiveCompanyIdByAccount(ok.accountId());
+            if (cidOpt.isPresent()) {
+                companyId = cidOpt.get();
+                companyRoles = providersMembership.getActiveRoleCodes(companyId, ok.accountId());
+            }
         }
+
         return ResponseEntity.ok(LoginOkResponse.of(
             ok.sessionId(),
             ok.accountId(),
@@ -135,7 +143,7 @@ public class IamController {
                 ok.account().getEmail(),
                 ok.account().isEmailVerified(),
                 ok.account().getUpdatedAt().getTime(),
-                companyId
+                companyId,companyRoles
             )
         ));
     }

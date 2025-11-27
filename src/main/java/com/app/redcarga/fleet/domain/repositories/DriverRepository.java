@@ -11,6 +11,5 @@ public interface DriverRepository {
     boolean existsByCompanyIdAndLicenseNumber(Integer companyId, String licenseNumber);
     List<Driver> findAllByCompanyId(Integer companyId);
     void delete(Driver driver);
+    boolean existsByIdAndAccountId(Integer driverId, Integer accountId);
 }
-
-

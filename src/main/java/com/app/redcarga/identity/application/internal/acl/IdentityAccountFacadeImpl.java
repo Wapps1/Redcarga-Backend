@@ -24,7 +24,8 @@ public class IdentityAccountFacadeImpl implements IdentityAccountFacade {
                 .map(p -> new IdentityPersonSnapshot(
                         accountId,
                         p.getFullName(),     // ya es String
-                        p.getDocNumber()     // ya es String
+                        p.getDocNumber(),  // ya es String
+                        p.getPhone()
                 ));
     }
 }

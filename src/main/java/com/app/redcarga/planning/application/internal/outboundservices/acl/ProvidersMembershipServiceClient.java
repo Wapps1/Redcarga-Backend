@@ -18,8 +18,14 @@ public class ProvidersMembershipServiceClient implements ProvidersMembershipServ
     }
 
     @Override
-    public boolean hasAnyRole(int companyId, int accountId, List<String> roleCodes) {
-        var codes = (roleCodes == null) ? List.<String>of() : List.copyOf(roleCodes);
-        return providers.hasAnyRole(companyId, accountId, codes.toArray(String[]::new));
+    public boolean hasAnyRole(int companyId, int accountId, List<Integer> roleCodes) {
+        List<Integer> codes = (roleCodes == null)
+                ? List.of()
+                : List.copyOf(roleCodes);
+
+        int[] arr = codes.stream().mapToInt(Integer::intValue).toArray();
+
+        return providers.hasAnyRole(companyId, accountId, arr);
     }
+
 }

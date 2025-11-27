@@ -18,4 +18,7 @@ public interface QuoteRepository {
     List<Quote> findByCompanyId(Integer companyId);
     List<Quote> findByCompanyIdAndStateCode(Integer companyId, String stateCode);
     List<Quote> findByCompanyIdAndStateCodeIn(Integer companyId, Collection<String> stateCodes);
+
+    List<Quote> findByRequestIdIn(List<Integer> requestIds);
+    List<Quote> findByRequestIdInAndStateCode(List<Integer> requestIds, String stateCode);
 }

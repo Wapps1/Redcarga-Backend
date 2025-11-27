@@ -1,16 +1,17 @@
 package com.app.redcarga.fleet.interfaces.rest.responses;
 
+import java.util.Date;
+
 public record DriverView(
         Integer driverId,
         Integer companyId,
-        String firstName,
-        String lastName,
-        String email,
+        String fullName,
+        String docNumber,
         String phone,
         String licenseNumber,
         boolean active,
-        Long createdAt,
-        Long updatedAt
+        Date createdAt,
+        Date updatedAt
 ) {}
 
 

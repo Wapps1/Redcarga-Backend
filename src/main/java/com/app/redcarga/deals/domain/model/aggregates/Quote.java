@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 @AttributeOverride(name = "id", column = @Column(name = "quote_id"))
 public class Quote extends AuditableAbstractAggregateRoot<Quote> {
 
+    @Getter
     @Column(name = "request_id", nullable = false)
     private Integer requestId;
 

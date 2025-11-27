@@ -11,4 +11,6 @@ public interface QuoteQueryService {
     List<Quote> listByCompanyIdAndState(Integer companyId, String stateCode);
     Optional<Quote> getById(Integer quoteId);
     List<QuoteItem> listItemsByQuoteId(Integer quoteId);
+
+    List<Quote> listByRequestIdsAndState(List<Integer> requestIds, String stateCode);
 }

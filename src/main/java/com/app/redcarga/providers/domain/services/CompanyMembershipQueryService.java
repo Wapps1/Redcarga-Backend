@@ -10,7 +10,7 @@ public interface CompanyMembershipQueryService {
     boolean isActiveMember(IsActiveMemberQuery q);
 
     /** true si el miembro ACTIVO tiene al menos uno de los roles pedidos */
-    boolean hasAnyRole(int companyId, int accountId, List<String> roleCodes);
+    boolean hasAnyRole(int companyId, int accountId, List<Integer> roleCodes);
 
     /** (opcional) lista de roles del miembro ACTIVO, útil para debugging o UI */
     List<String> getActiveRoleCodes(int companyId, int accountId);

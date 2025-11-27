@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,14 +35,24 @@ public class DriversController {
     @Operation(summary = "Register a driver for the given company")
     public ResponseEntity<RegisterDriverResponse> register(
             @PathVariable int companyId,
-            @Valid @RequestBody RegisterDriverRequest body
+            @Valid @RequestBody RegisterDriverRequest body,
+            JwtAuthenticationToken principal
     ) {
+        // extraer account id del caller desde el token (subject)
+        Integer callerAccountId = null;
+        try {
+            callerAccountId = Integer.valueOf(principal.getToken().getSubject());
+        } catch (Exception e) {
+            // si no se puede extraer el subject, denegar
+            return ResponseEntity.status(403).body(new RegisterDriverResponse(false, null));
+        }
+
+        // usar la nueva sobrecarga para validar que el caller pertenece a la company
+        driverQueries.findAllByCompany(companyId, callerAccountId); // lanzará AccessDenied si no pertenece
+
         var cmd = new CreateDriverCommand(
                 companyId,
-                body.firstName(),
-                body.lastName(),
-                body.email(),
-                body.phone(),
+                body.accountId(),
                 body.licenseNumber(),
                 body.active()
         );
@@ -52,35 +63,31 @@ public class DriversController {
     @GetMapping("/companies/{companyId}/drivers")
     @PreAuthorize("hasRole('PROVIDER')")
     @Operation(summary = "List drivers by company")
-    public ResponseEntity<List<DriverView>> listByCompany(@PathVariable int companyId) {
-        List<DriverView> items = driverQueries.findAllByCompany(companyId)
-                .stream().map(DriversController::toView).toList();
+    public ResponseEntity<List<DriverView>> listByCompany(@PathVariable int companyId, JwtAuthenticationToken principal) {
+
+        Integer callerAccountId = Integer.valueOf(principal.getToken().getSubject());
+
+        List<DriverView> items = driverQueries.findAllByCompany(companyId, callerAccountId);
         return ResponseEntity.ok(items);
     }
 
     @GetMapping("/drivers/{driverId}")
-    @PreAuthorize("hasRole('PROVIDER')")
     @Operation(summary = "Get driver by id")
-    public ResponseEntity<DriverView> getById(@PathVariable int driverId) {
+    public ResponseEntity<DriverView> getById(@PathVariable int driverId, JwtAuthenticationToken principal) {
         return driverQueries.findById(driverId)
-                .map(DriversController::toView)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/drivers/{driverId}")
     @PreAuthorize("hasRole('PROVIDER')")
-    @Operation(summary = "Update a driver")
+    @Operation(summary = "Update a driver") //falta proteger para q solo un miembro autorizado de la compañia pueda
     public ResponseEntity<Void> update(
             @PathVariable int driverId,
             @Valid @RequestBody UpdateDriverRequest body
     ) {
         var cmd = new UpdateDriverCommand(
                 driverId,
-                body.firstName(),
-                body.lastName(),
-                body.email(),
-                body.phone(),
                 body.licenseNumber(),
                 body.active()
         );
@@ -94,21 +101,6 @@ public class DriversController {
     public ResponseEntity<Void> delete(@PathVariable int driverId) {
         driverCommands.handle(new DeleteDriverCommand(driverId));
         return ResponseEntity.noContent().build();
-    }
-
-    private static DriverView toView(Driver d) {
-        return new DriverView(
-                d.getId(),
-                d.getCompanyId(),
-                d.getFirstName(),
-                d.getLastName(),
-                d.getEmail(),
-                d.getPhone() != null ? d.getPhone().toString() : null,
-                d.getLicenseNumber(),
-                d.isActive(),
-                d.getCreatedAt() != null ? d.getCreatedAt().getTime() : null,
-                d.getUpdatedAt() != null ? d.getUpdatedAt().getTime() : null
-        );
     }
 }
 

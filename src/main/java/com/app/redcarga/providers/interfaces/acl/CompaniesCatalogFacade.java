@@ -4,5 +4,3 @@ public interface CompaniesCatalogFacade {
     boolean existsCompany(int companyId);
     boolean isActive(int companyId);
 }
-
-

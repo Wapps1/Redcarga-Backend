@@ -144,4 +144,21 @@ public class MultiFlywayConfig {
         flyway.migrate();
         return flyway;
     }
+
+    @Bean
+    @DependsOn({"flywayDeals","flywayFleet"})
+    public Flyway flywayTracking(DataSource ds) {
+        Flyway flyway = Flyway.configure()
+                .dataSource(ds)
+                .schemas("tracking")
+                .table("flyway_history_tracking")
+                .locations("classpath:db/migration/tracking")
+                .group(true)
+                .cleanDisabled(true)
+                .createSchemas(true)
+                //.baselineOnMigrate(true)
+                .load();
+        flyway.migrate();
+        return flyway;
+    }
 }
