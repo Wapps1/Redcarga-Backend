@@ -50,13 +50,15 @@ public class ChangeController {
         return new ChangeSimpleResponse(changeId);
     }
 
+    //SI ALGO FALLA, QIZA SEA POR ESTO DE ACA, PUSE EL JWT AUTENTICATION Y ASI
     @PostMapping("/{changeId}/decision")
     public ResponseEntity<Void> decideChange(
             @PathVariable Integer changeId,
             @RequestBody DecisionRequest req,
-            @RequestHeader("X-Actor-Account-Id") Integer actorAccountId,
-            @RequestHeader(value = "If-Match", required = false) Integer ifMatchVersion
+            @RequestHeader(value = "If-Match", required = false) Integer ifMatchVersion,
+            JwtAuthenticationToken principal
     ) {
+        Integer actorAccountId = Integer.valueOf(principal.getToken().getSubject());
         changeCommandService.decideOnProposedChange(changeId, req.accept, actorAccountId, ifMatchVersion);
         return ResponseEntity.noContent().build();
     }

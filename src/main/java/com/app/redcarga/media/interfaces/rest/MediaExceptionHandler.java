@@ -9,7 +9,7 @@ import org.springframework.web.client.ResourceAccessException;
 import java.time.Instant;
 import java.util.Map;
 
-@RestControllerAdvice(assignableTypes = MediaUploadController.class)
+@RestControllerAdvice(assignableTypes = MediaController.class)
 public class MediaExceptionHandler {
 
     @ExceptionHandler(HttpStatusCodeException.class)
