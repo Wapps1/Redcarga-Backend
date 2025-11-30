@@ -1,5 +1,6 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
+import com.app.redcarga.shared.ws.auth.DriverQuoteAssignmentVerifierPort;
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.ChatSubscriptionVerifierPort;
@@ -43,17 +44,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final RequestOwnershipVerifierPort requestOwnershipVerifierPort;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final ChatSubscriptionVerifierPort chatSubscriptionVerifierPort;
+    private final DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier;
 
     public WebSocketConfig(@Qualifier("iamJwtDecoder") JwtDecoder jwtDecoder,
                            MembershipVerifierPort membershipVerifierPort,
                            RequestOwnershipVerifierPort requestOwnershipVerifierPort,
                            ApplicationEventPublisher applicationEventPublisher,
-                           ChatSubscriptionVerifierPort chatSubscriptionVerifierPort) {
+                           ChatSubscriptionVerifierPort chatSubscriptionVerifierPort,
+                           DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier) {
         this.jwtDecoder = jwtDecoder;
         this.membershipVerifierPort = membershipVerifierPort;
         this.requestOwnershipVerifierPort = requestOwnershipVerifierPort;
         this.applicationEventPublisher = applicationEventPublisher;
         this.chatSubscriptionVerifierPort = chatSubscriptionVerifierPort;
+        this.driverQuoteAssignmentVerifier = driverQuoteAssignmentVerifier;
     }
 
     @Override
@@ -89,7 +93,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         membershipVerifierPort,
         requestOwnershipVerifierPort,
         applicationEventPublisher,
-        chatSubscriptionVerifierPort
+        chatSubscriptionVerifierPort,
+            driverQuoteAssignmentVerifier
+
     ));
     }
 

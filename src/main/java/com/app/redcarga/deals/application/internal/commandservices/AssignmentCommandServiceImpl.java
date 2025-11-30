@@ -53,7 +53,7 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
             it.setStatusCode("DONE");
             it.setCompletedBy(actorAccountId);
             it.setCompletedAt(Instant.now());
-            it.setAssignmentId(saved.getAssignmentId());
+            //it.setAssignmentId(saved.getAssignmentId());
             itemRepository.save(it);
         } else {
             throw new DomainException("checklist_item_assignment_missing");
@@ -77,7 +77,7 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
             it.setStatusCode("PENDING");
             it.setCompletedBy(null);
             it.setCompletedAt(null);
-            it.setAssignmentId(null);
+            //it.setAssignmentId(null);
             itemRepository.save(it);
         }
     }

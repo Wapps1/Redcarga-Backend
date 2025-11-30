@@ -1,5 +1,6 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
+import com.app.redcarga.shared.ws.auth.DriverQuoteAssignmentVerifierPort;
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.ChatSubscriptionVerifierPort;
@@ -24,15 +25,19 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final RequestOwnershipVerifierPort requestOwnershipVerifier;
     private final ApplicationEventPublisher events;
     private final ChatSubscriptionVerifierPort chatSubscriptionVerifier;
+    private final DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier;
+
 
     public StompAuthChannelInterceptor(MembershipVerifierPort membership,
                                        RequestOwnershipVerifierPort requestOwnershipVerifier,
                                        ApplicationEventPublisher events,
-                                       ChatSubscriptionVerifierPort chatSubscriptionVerifier) {
+                                       ChatSubscriptionVerifierPort chatSubscriptionVerifier,
+                                       DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier) {
         this.membership = membership;
         this.requestOwnershipVerifier = requestOwnershipVerifier;
         this.events = events;
         this.chatSubscriptionVerifier = chatSubscriptionVerifier;
+        this.driverQuoteAssignmentVerifier = driverQuoteAssignmentVerifier;
     }
 
     @Override

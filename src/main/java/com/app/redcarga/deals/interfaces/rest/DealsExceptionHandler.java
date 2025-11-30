@@ -109,6 +109,25 @@ public class DealsExceptionHandler {
         return error(ex.getCode(), HttpStatus.UNPROCESSABLE_ENTITY, ex.getMissing());
     }
 
+    @ExceptionHandler(com.app.redcarga.deals.domain.exceptions.GuideAlreadyExistsException.class)
+    public ResponseEntity<Object> onGuideAlreadyExists(com.app.redcarga.deals.domain.exceptions.GuideAlreadyExistsException ex) {
+        var details = Map.of(
+                "quoteId", ex.getQuoteId(),
+                "type", ex.getType().toString(),
+                "message", "Guide with this type already exists for the quote"
+        );
+        return error("guide_already_exists", HttpStatus.CONFLICT, details);
+    }
+
+    @ExceptionHandler(com.app.redcarga.deals.domain.exceptions.QuoteNotAcceptedException.class)
+    public ResponseEntity<Object> onQuoteNotAccepted(com.app.redcarga.deals.domain.exceptions.QuoteNotAcceptedException ex) {
+        var details = Map.of(
+                "quoteId", ex.getQuoteId(),
+                "message", "Quote must be in ACEPTADA state to create guides"
+        );
+        return error("quote_not_accepted", HttpStatus.BAD_REQUEST, details);
+    }
+
     private static final Logger log = LoggerFactory.getLogger(DealsExceptionHandler.class);
 
     /** DEV helper: devuelve message y loggea stacktrace para 500 */ 

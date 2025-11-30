@@ -8,9 +8,9 @@ import com.app.redcarga.deals.domain.model.commands.CreateQuoteCommand;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
 import com.app.redcarga.deals.domain.services.QuoteCommandService;
 import com.app.redcarga.deals.application.internal.outboundservices.acl.ProvidersMembershipClient;
+import com.app.redcarga.deals.application.internal.outboundservices.acl.RequestsServiceClient;
 import com.app.redcarga.deals.application.internal.gateways.ChatParticipantGateway;
 import com.app.redcarga.deals.infrastructure.outbound.DealsChatOutboxAdapter;
-import com.app.redcarga.requests.interfaces.acl.RequestFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
     private final NotificationsPort notificationsPort;
-    private final RequestFacade requestsFacade;
+    private final RequestsServiceClient requestsClient;
     private final ChatParticipantGateway chatParticipantGateway;
     private final ChatMessageGateway chatMessageGateway;
     private final DealsChatOutboxAdapter chatOutboxAdapter;
@@ -88,7 +88,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
                 .orElseThrow(() -> new DomainException("quote_not_found"));
 
         // Only the original requester of the request may start the negotiation
-        if (!requestsFacade.isRequester(quote.getRequestId(), actorAccountId)) {
+        if (!requestsClient.isRequester(quote.getRequestId(), actorAccountId)) {
             throw new DomainException("not_request_owner");
         }
 
@@ -98,7 +98,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
         }
 
         // Domain transition: decide TRATO vs EN_ESPERA based on request snapshot
-        var snapOpt = requestsFacade.getAcceptanceSnapshot(quote.getRequestId());
+        var snapOpt = requestsClient.getAcceptanceSnapshot(quote.getRequestId());
         if (snapOpt.isEmpty()) {
             throw new DomainException("request_not_found");
         }

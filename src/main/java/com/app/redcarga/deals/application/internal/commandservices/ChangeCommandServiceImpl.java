@@ -11,7 +11,7 @@ import com.app.redcarga.deals.infrastructure.persistence.jpa.repositories.JpaCha
 import com.app.redcarga.deals.infrastructure.outbound.DealsChangeOutboxAdapter;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
 import com.app.redcarga.deals.application.internal.outboundservices.acl.ProvidersMembershipClient;
-import com.app.redcarga.requests.interfaces.acl.RequestFacade;
+import com.app.redcarga.deals.application.internal.outboundservices.acl.RequestsServiceClient;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -27,7 +27,7 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
 
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
-    private final RequestFacade requestsFacade;
+    private final RequestsServiceClient requestsClient;
     private final JpaChangeRepository changeRepository;
     private final ChatMessageGateway chatMessageGateway;
     private final DealsChangeOutboxAdapter outboxAdapter;
@@ -41,7 +41,7 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
         Quote quote = quoteRepository.findById(quoteId).orElseThrow(() -> new DomainException("quote_not_found"));
 
         // permission: either requester or member of provider company
-        boolean isRequester = requestsFacade.isRequester(quote.getRequestId(), actorAccountId);
+        boolean isRequester = requestsClient.isRequester(quote.getRequestId(), actorAccountId);
         boolean isProviderMember = providersMembershipClient.isMemberOfCompany(quote.getCompanyId(), actorAccountId);
         if (!isRequester && !isProviderMember) throw new DomainException("not_allowed_to_change_quote");
 
