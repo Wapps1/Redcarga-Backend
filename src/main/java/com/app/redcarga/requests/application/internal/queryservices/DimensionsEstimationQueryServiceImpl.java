@@ -3,6 +3,7 @@ package com.app.redcarga.requests.application.internal.queryservices;
 import com.app.redcarga.requests.application.internal.gateways.MeasurementsGateway;
 import com.app.redcarga.requests.application.internal.gateways.Upload;
 import com.app.redcarga.requests.application.internal.views.DimensionsCmView;
+import com.app.redcarga.requests.domain.services.DimensionsEstimationQueryService;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,8 +17,8 @@ public class DimensionsEstimationQueryServiceImpl implements DimensionsEstimatio
     private final MeasurementsGateway measurements;
 
     @Override
-    public DimensionsCmView estimate(Upload top, Upload side, double markerSizeMm, String requestId) {
-        var r = measurements.estimate(top, side, markerSizeMm, requestId);
+    public DimensionsCmView estimate(Upload top, Upload side, double markerSizeMm) {
+        var r = measurements.estimate(top, side, markerSizeMm);
 
         if (r == null || r.dimensions_cm() == null) {
             throw new DomainException("measurements_unavailable");

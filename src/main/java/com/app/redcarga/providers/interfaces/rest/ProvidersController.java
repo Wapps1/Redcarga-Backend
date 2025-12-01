@@ -88,8 +88,6 @@ public class ProvidersController {
         var view = opt.get();
 
         int actor = resolveActorAccountIdOrThrow();
-        boolean allowed = (view.createdByAccountId() == actor) || queryRepo.hasActiveMembership(companyId, actor);
-        if (!allowed) throw new AccessDeniedException("not_a_member_of_company");
 
         CompanyView response = new CompanyView(
                 view.companyId(), view.legalName(), view.tradeName(), view.ruc(),

@@ -1,6 +1,7 @@
 package com.app.redcarga.providers.application.internal.queryservices;
 
 import com.app.redcarga.providers.application.internal.views.CompanyView;
+import com.app.redcarga.providers.application.internal.views.CompanyNamesView;
 import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
 import com.app.redcarga.providers.domain.services.CompanyQueryService;
 import lombok.RequiredArgsConstructor;
@@ -19,5 +20,10 @@ public class CompanyQueryServiceImpl implements CompanyQueryService {
     @Override
     public Optional<CompanyView> getCompany(int companyId) {
         return repo.findById(companyId);
+    }
+
+    @Override
+    public Optional<CompanyNamesView> getCompanyNames(int companyId) {
+        return repo.findNamesById(companyId);
     }
 }

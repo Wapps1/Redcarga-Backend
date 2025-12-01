@@ -11,6 +11,7 @@ import com.app.redcarga.iam.domain.repositories.SessionRepository;
 import com.app.redcarga.iam.domain.repositories.SignupIntentRepository;
 import com.app.redcarga.iam.domain.repositories.SystemRoleRepository;
 import com.app.redcarga.iam.infrastructure.jwt.IamJwtIssuer;
+import com.app.redcarga.iam.infrastructure.jwt.IamJwtProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.net.InetAddress;
@@ -30,6 +31,7 @@ public class AuthCommandService {
     private final Clock clock;
     private final IamJwtIssuer jwtIssuer;
     private final SystemRoleRepository roleRepo;
+    private final IamJwtProperties jwtProps;
 
     public AuthCommandService(SessionRepository sessionRepo,
                               AccountRepository accountRepo,
@@ -37,7 +39,8 @@ public class AuthCommandService {
                               AuthProviderGateway authGateway,
                               Clock clock,
                               IamJwtIssuer jwtIssuer,
-                              SystemRoleRepository roleRepo) {
+                              SystemRoleRepository roleRepo,
+                              IamJwtProperties jwtProps) {
         this.sessionRepo = sessionRepo;
         this.accountRepo = accountRepo;
         this.signupRepo = signupRepo;
@@ -45,6 +48,7 @@ public class AuthCommandService {
         this.clock = clock;
         this.jwtIssuer = jwtIssuer;
         this.roleRepo = roleRepo;
+        this.jwtProps = jwtProps;
     }
 
     /**
@@ -74,7 +78,7 @@ public class AuthCommandService {
      * - Si no hay intent abierto -> crea sesión + emite JWT IAM.
      */
     @Transactional
-    public LoginOutcome loginAndIssueToken(int accountId, String platform, String ip, long ttlSeconds) {
+    public LoginOutcome loginAndIssueToken(int accountId, String platform, String ip) {
         // 1) Gate de registro: intent "abierto" = PENDING / EMAIL_VERIFIED / BASIC_PROFILE_COMPLETED
         var openIntent = signupRepo.findOpenByAccountId(accountId);
         if (openIntent.isPresent()) {
@@ -97,7 +101,7 @@ public class AuthCommandService {
 
         // 3) Registro completo (DONE) -> crear Session
         var plat = Platform.valueOf(platform.toUpperCase());
-        var expiresAt = Instant.now(clock).plusSeconds(ttlSeconds);
+        var expiresAt = Instant.now(clock).plus(jwtProps.ttl());
         InetAddress addr = null;
         if (ip != null && !ip.isBlank()) {
             try { addr = InetAddress.getByName(ip); } catch (UnknownHostException ignore) {}

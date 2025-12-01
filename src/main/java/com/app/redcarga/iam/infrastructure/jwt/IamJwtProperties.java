@@ -14,5 +14,5 @@ public record IamJwtProperties(
         String privateKeyLocation,     // file:./.secrets/iam/dev/iam_private.pem
         String publicKeyLocation       // para JWKS más adelante
 ) {
-    public Duration ttl() { return Duration.ofSeconds(ttlSeconds != null ? ttlSeconds : 900L); }
+    public Duration ttl() { return Duration.ofSeconds(ttlSeconds != null ? ttlSeconds : 18000); }
 }

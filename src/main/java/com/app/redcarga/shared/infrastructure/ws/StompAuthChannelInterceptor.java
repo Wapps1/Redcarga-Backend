@@ -147,6 +147,36 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                     return null;
                 }
             }
+
+            // Validate subscriber for tracking topic
+            var trackingQuoteId = DestinationPatterns.extractQuoteIdFromTrackingTopic(dest);
+            if (trackingQuoteId.isPresent()) {
+                var user = acc.getUser();
+                if (user == null || user.getName() == null) {
+                    notifyAccessDenied(null, "No autenticado", dest);
+                    return null;
+                }
+                final int accountId;
+                try {
+                    accountId = Integer.parseInt(user.getName());
+                } catch (NumberFormatException e) {
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
+                    return null;
+                }
+                int qid = trackingQuoteId.get();
+                boolean canAccess;
+                try {
+                    canAccess = chatSubscriptionVerifier.canSubscribeToQuote(qid, accountId)
+                             || driverQuoteAssignmentVerifier.isDriverOfQuote(qid, accountId);
+                } catch (Exception ex) {
+                    notifyAccessDenied(user.getName(), "Error al verificar acceso al tracking", dest);
+                    return null;
+                }
+                if (!canAccess) {
+                    notifyAccessDenied(user.getName(), "No autorizado para tracking de quote=" + qid, dest);
+                    return null;
+                }
+            }
         }
         return message; // dejar pasar los demás
     }

@@ -1,6 +1,7 @@
 package com.app.redcarga.providers.infrastructure.persistence.jdbc;
 
 import com.app.redcarga.providers.application.internal.views.CompanyView;
+import com.app.redcarga.providers.application.internal.views.CompanyNamesView;
 import com.app.redcarga.providers.domain.repositories.CompanyQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -69,5 +70,24 @@ public class PgCompanyQueryRepository implements CompanyQueryRepository {
                 .addValue("companyId", companyId)
                 .addValue("accountId", accountId);
         return Boolean.TRUE.equals(jdbc.query(sql, params, rs -> rs.next() ? Boolean.TRUE : Boolean.FALSE));
+    }
+
+    @Override
+    public Optional<CompanyNamesView> findNamesById(int companyId) {
+        var sql = """
+            SELECT c.legal_name, c.trade_name
+            FROM providers.companies c
+            WHERE c.company_id = :companyId
+        """;
+        var params = new MapSqlParameterSource().addValue("companyId", companyId);
+
+        return jdbc.query(sql, params, rs -> {
+            if (!rs.next()) return Optional.empty();
+            var v = new CompanyNamesView(
+                    rs.getString("legal_name"),
+                    rs.getString("trade_name")
+            );
+            return Optional.of(v);
+        });
     }
 }
