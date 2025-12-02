@@ -5,10 +5,11 @@ import com.app.redcarga.deals.domain.repositories.ChecklistInstanceItemRepositor
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface JpaChecklistInstanceItemRepository extends JpaRepository<ChecklistInstanceItem, Integer>, ChecklistInstanceItemRepository {
-	default java.util.List<ChecklistInstanceItem> insertAll(java.util.List<ChecklistInstanceItem> items) {
+	default List<ChecklistInstanceItem> insertAll(List<ChecklistInstanceItem> items) {
 		return saveAll(items);
 	}
 
@@ -30,6 +31,6 @@ public interface JpaChecklistInstanceItemRepository extends JpaRepository<Checkl
              and i.code in :codes
              and i.statusCode <> 'DONE'
            """)
-	java.util.List<String> findCodesNotDoneByInstanceIdAndCodes(Integer instanceId, java.util.List<String> codes);
+	List<String> findCodesNotDoneByInstanceIdAndCodes(Integer instanceId,List<String> codes);
 
 }

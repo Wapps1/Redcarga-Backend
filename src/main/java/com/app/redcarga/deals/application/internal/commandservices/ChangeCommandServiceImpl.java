@@ -1,15 +1,17 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
 import com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway;
+import com.app.redcarga.deals.application.internal.gateways.ChatParticipantGateway;
 import com.app.redcarga.deals.domain.model.entities.Change;
 import com.app.redcarga.deals.domain.model.entities.ChangeItem;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
+import com.app.redcarga.deals.domain.repositories.ChangeItemRepository;
 import com.app.redcarga.deals.domain.services.ChangeCommandService;
 import com.app.redcarga.deals.infrastructure.persistence.jpa.repositories.JpaChangeRepository;
 import com.app.redcarga.deals.infrastructure.outbound.DealsChangeOutboxAdapter;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
 import com.app.redcarga.deals.application.internal.outboundservices.acl.ProvidersMembershipClient;
-import com.app.redcarga.requests.interfaces.acl.RequestFacade;
+import com.app.redcarga.deals.application.internal.outboundservices.acl.RequestsServiceClient;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -25,11 +27,12 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
 
     private final QuoteRepository quoteRepository;
     private final ProvidersMembershipClient providersMembershipClient;
-    private final RequestFacade requestsFacade;
+    private final RequestsServiceClient requestsClient;
     private final JpaChangeRepository changeRepository;
     private final ChatMessageGateway chatMessageGateway;
     private final DealsChangeOutboxAdapter outboxAdapter;
-    private final com.app.redcarga.deals.application.internal.gateways.ChatParticipantGateway chatParticipantGateway;
+    private final ChatParticipantGateway chatParticipantGateway;
+    private final ChangeItemRepository changeItemRepository;
 
     @Override
     @Transactional
@@ -38,7 +41,7 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
         Quote quote = quoteRepository.findById(quoteId).orElseThrow(() -> new DomainException("quote_not_found"));
 
         // permission: either requester or member of provider company
-        boolean isRequester = requestsFacade.isRequester(quote.getRequestId(), actorAccountId);
+        boolean isRequester = requestsClient.isRequester(quote.getRequestId(), actorAccountId);
         boolean isProviderMember = providersMembershipClient.isMemberOfCompany(quote.getCompanyId(), actorAccountId);
         if (!isRequester && !isProviderMember) throw new DomainException("not_allowed_to_change_quote");
 
@@ -109,17 +112,115 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
             return applyFreeChange(quoteId, items, actorAccountId, ifMatchVersion, idempotencyKey);
         }
 
+        // NUEVO: cuando la quote ya está ACEPTADA -> crear propuesta de cambio y dejarla PENDIENTE
+        if ("ACEPTADA".equals(state)) {
+            // require chat participant (mismo requisito que en TRATO/EN_ESPERA)
+            boolean isParticipant = chatParticipantGateway.exists(quoteId, actorAccountId);
+            if (!isParticipant) throw new DomainException("not_chat_participant");
+
+            // crear Change de tipo PROPUESTA en estado PENDIENTE (usar factory existente y cambiar estado)
+            Change change = Change.createApplied(quote, "PROPUESTA", actorAccountId); // factory set quote/kind/createdBy
+            change.markPending(); // dejar PENDIENTE
+            for (ChangeItem it : items) {
+                change.addItem(it);
+            }
+            Change saved = changeRepository.save(change);
+
+            // mensaje de sistema y snapshot outbox (tipo CHANGE_PROPOSED)
+            String body = "Cambio propuesto";
+            chatMessageGateway.insertSystemMessage(quoteId, "CHANGE_PROPOSED", saved.getChangeId(), null, body, actorAccountId);
+            outboxAdapter.persistChangeOutbox(saved);
+
+            return saved.getChangeId();
+        }
+
+
         throw new DomainException("change_not_allowed_in_state");
     }
 
+    /*Decidir si un cambio es aceptado o rechazado*/
+    @Override
+    @Transactional
+    public Integer decideOnProposedChange(Integer changeId, boolean accept, Integer actorAccountId, Integer ifMatchVersion) {
+        // Cargar change sin lazy collections problemáticas
+        Change change = changeRepository.findById(changeId)
+                .orElseThrow(() -> new DomainException("change_not_found"));
+
+        if (!"PENDIENTE".equals(change.getStatusCode())) {
+            throw new DomainException("change_not_pending");
+        }
+
+        // cannot decide own change
+        if (actorAccountId.equals(change.getCreatedBy())) {
+            throw new DomainException("cannot_decide_own_change");
+        }
+
+        // Cargar quote por separado
+        Quote quote = quoteRepository.findById(change.getQuote().getId())
+                .orElseThrow(() -> new DomainException("quote_not_found"));
+
+        if (!"ACEPTADA".equals(quote.getStateCode())) {
+            throw new DomainException("change_decision_not_allowed_in_state");
+        }
+
+        // optional optimistic check against quote version
+        if (ifMatchVersion != null && !ifMatchVersion.equals(quote.getVersion())) {
+            throw new ObjectOptimisticLockingFailureException(Quote.class, quote.getId());
+        }
+
+        if (accept) {
+            // CARGAR ITEMS POR SEPARADO usando el nuevo repositorio
+            List<ChangeItem> items = changeItemRepository.findByChangeId(changeId);
+
+            // apply items to quote and persist
+            applyChangesToQuote(quote, items);
+            quoteRepository.save(quote);
+
+            // mark applied and persist change
+            change.markApplied();
+            Change saved = changeRepository.save(change);
+
+            // chat message + outbox snapshot
+            String body = "Cambio aceptado";
+            chatMessageGateway.insertSystemMessage(quote.getId(), "CHANGE_ACCEPTED", saved.getChangeId(), null, body, actorAccountId);
+            outboxAdapter.persistChangeOutbox(saved);
+
+            return saved.getChangeId();
+        } else {
+            // reject
+            change.markRejected();
+            Change saved = changeRepository.save(change);
+
+            String body = "Cambio rechazado";
+            chatMessageGateway.insertSystemMessage(quote.getId(), "CHANGE_REJECTED", saved.getChangeId(), null, body, actorAccountId);
+            outboxAdapter.persistChangeOutbox(saved);
+
+            return saved.getChangeId();
+        }
+    }
     private void applyChangesToQuote(Quote quote, List<ChangeItem> items) {
+        System.out.println("========== APLICANDO CAMBIOS ==========");
+        System.out.println("Total de items a aplicar: " + items.size());
+        
         for (ChangeItem ci : items) {
+            System.out.println("--- ChangeItem ---");
+            System.out.println("fieldCode: " + ci.getFieldCode());
+            System.out.println("newValue: " + ci.getNewValue());
+            System.out.println("oldValue: " + ci.getOldValue());
+            System.out.println("targetQuoteItemId: " + ci.getTargetQuoteItemId());
+            System.out.println("targetRequestItemId: " + ci.getTargetRequestItemId());
+            
             switch (ci.getFieldCode()) {
                 case "PRICE_TOTAL":
                     try {
+                        System.out.println("Intentando parsear newValue como BigDecimal: " + ci.getNewValue());
                         BigDecimal newTotal = new BigDecimal(ci.getNewValue());
+                        System.out.println("newTotal parseado correctamente: " + newTotal);
                         quote.updateTotalAmount(newTotal);
+                        System.out.println("Total actualizado exitosamente");
                     } catch (Exception ex) {
+                        System.err.println("ERROR al parsear PRICE_TOTAL: " + ex.getMessage());
+                        ex.printStackTrace();
                         throw new DomainException("change_invalid_price_total");
                     }
                     break;
@@ -130,9 +231,12 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
                             .findFirst()
                             .orElseThrow(() -> new DomainException("quote_item_not_found"));
                     try {
+                        System.out.println("Intentando parsear QTY: " + ci.getNewValue());
                         BigDecimal newQty = new BigDecimal(ci.getNewValue());
+                        System.out.println("newQty parseado: " + newQty);
                         quote.updateItemQty(found.getRequestItemId(), newQty);
                     } catch (Exception ex) {
+                        System.err.println("ERROR al parsear QTY: " + ex.getMessage());
                         throw new DomainException("change_invalid_qty");
                     }
                     break;
@@ -154,8 +258,10 @@ public class ChangeCommandServiceImpl implements ChangeCommandService {
                     quote.removeItem(f.getRequestItemId());
                     break;
                 default:
+                    System.err.println("Campo desconocido: " + ci.getFieldCode());
                     throw new DomainException("change_item_field_unknown");
             }
         }
+        System.out.println("========== FIN APLICAR CAMBIOS ==========");
     }
 }

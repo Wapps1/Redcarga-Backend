@@ -1,0 +1,2 @@
+ALTER TABLE deals.guides
+ADD COLUMN guide_url  VARCHAR(500) NOT NULL;

@@ -1,9 +1,11 @@
 package com.app.redcarga.requests.application.internal.acl;
 
 import com.app.redcarga.requests.domain.repositories.RequestAcceptanceRepository;
+import com.app.redcarga.requests.domain.repositories.RequestRepository;
 import com.app.redcarga.requests.domain.services.RequestCommandService;
 import com.app.redcarga.requests.domain.services.RequestQueryService;
 import com.app.redcarga.requests.interfaces.acl.RequestFacade;
+import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +19,7 @@ public class RequestFacadeImpl implements RequestFacade {
     private final RequestQueryService requestQueryService;
     private final RequestCommandService requestCommandService;
     private final RequestAcceptanceRepository requestAcceptanceRepository;
+    private final RequestRepository requestRepository;
 
     @Override
     public boolean isRequester(Integer requestId, Integer accountId) {
@@ -38,5 +41,15 @@ public class RequestFacadeImpl implements RequestFacade {
         Integer acceptedQuoteId = requestAcceptanceRepository.findAcceptedQuoteId(requestId).orElse(null);
 
         return Optional.of(new RequestAcceptanceSnapshot(requestId, acceptedQuoteId, statusId));
+    }
+
+    @Override
+    @Transactional
+    public void closeRequest(Integer requestId) {
+        var request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new DomainException("request_not_found"));
+
+        request.close();
+        requestRepository.save(request);
     }
 }

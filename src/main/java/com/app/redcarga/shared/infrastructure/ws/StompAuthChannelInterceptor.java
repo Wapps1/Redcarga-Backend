@@ -1,5 +1,6 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
+import com.app.redcarga.shared.ws.auth.DriverQuoteAssignmentVerifierPort;
 import com.app.redcarga.shared.ws.auth.MembershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.RequestOwnershipVerifierPort;
 import com.app.redcarga.shared.ws.auth.ChatSubscriptionVerifierPort;
@@ -24,15 +25,19 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final RequestOwnershipVerifierPort requestOwnershipVerifier;
     private final ApplicationEventPublisher events;
     private final ChatSubscriptionVerifierPort chatSubscriptionVerifier;
+    private final DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier;
+
 
     public StompAuthChannelInterceptor(MembershipVerifierPort membership,
                                        RequestOwnershipVerifierPort requestOwnershipVerifier,
                                        ApplicationEventPublisher events,
-                                       ChatSubscriptionVerifierPort chatSubscriptionVerifier) {
+                                       ChatSubscriptionVerifierPort chatSubscriptionVerifier,
+                                       DriverQuoteAssignmentVerifierPort driverQuoteAssignmentVerifier) {
         this.membership = membership;
         this.requestOwnershipVerifier = requestOwnershipVerifier;
         this.events = events;
         this.chatSubscriptionVerifier = chatSubscriptionVerifier;
+        this.driverQuoteAssignmentVerifier = driverQuoteAssignmentVerifier;
     }
 
     @Override
@@ -139,6 +144,36 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 }
                 if (!allowed) {
                     notifyAccessDenied(user.getName(), "No autorizado para chat de quote=" + quoteIdFromChat, dest);
+                    return null;
+                }
+            }
+
+            // Validate subscriber for tracking topic
+            var trackingQuoteId = DestinationPatterns.extractQuoteIdFromTrackingTopic(dest);
+            if (trackingQuoteId.isPresent()) {
+                var user = acc.getUser();
+                if (user == null || user.getName() == null) {
+                    notifyAccessDenied(null, "No autenticado", dest);
+                    return null;
+                }
+                final int accountId;
+                try {
+                    accountId = Integer.parseInt(user.getName());
+                } catch (NumberFormatException e) {
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
+                    return null;
+                }
+                int qid = trackingQuoteId.get();
+                boolean canAccess;
+                try {
+                    canAccess = chatSubscriptionVerifier.canSubscribeToQuote(qid, accountId)
+                             || driverQuoteAssignmentVerifier.isDriverOfQuote(qid, accountId);
+                } catch (Exception ex) {
+                    notifyAccessDenied(user.getName(), "Error al verificar acceso al tracking", dest);
+                    return null;
+                }
+                if (!canAccess) {
+                    notifyAccessDenied(user.getName(), "No autorizado para tracking de quote=" + qid, dest);
                     return null;
                 }
             }

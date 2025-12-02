@@ -62,4 +62,10 @@ public class QuoteQueryServiceImpl implements QuoteQueryService {
         }
         return quoteRepository.findByRequestIdIn(requestIds);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Integer> getQuoteVersion(Integer quoteId) {
+        return quoteRepository.findVersionByQuoteId(quoteId);
+    }
 }

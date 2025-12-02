@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <title>WS Tester - Quote Tracking</title>
+    <style>
+        body{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:12px;background:#0b0f14;color:#e6edf3}
+        header{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+        .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        input,button,select{font-size:13px;padding:8px;border-radius:6px;border:1px solid #27313b;background:#0f1419;color:#e6edf3}
+        button{cursor:pointer}
+        #log{white-space:pre-wrap;border:1px solid #1f2630;padding:10px;height:420px;overflow:auto;background:#071018}
+        .muted{color:#9aa4b2}
+        .ts{color:#758195;min-width:170px;display:inline-block}
+        .tag{display:inline-block;padding:3px 8px;border-radius:999px;margin-right:8px}
+        .tag.info{background:#19324b;color:#9fd1ff}
+        .tag.ok{background:#163b24;color:#9ff0c8}
+        .tag.err{background:#3e1515;color:#ffb1a6}
+        .msg{display:inline-block;max-width:78%}
+    </style>
+    <script src="https://unpkg.com/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+</head>
+<body>
+<header>
+    <h3>WS Tester — Quote Tracking</h3>
+    <div class="row">
+        <label class="muted">JWT: <input id="jwt" size="80" placeholder="pega tu JWT aquí" /></label>
+    </div>
+    <div class="row">
+        <label class="muted">WS URL: <input id="url" size="60" value="ws://localhost:8080/ws" /></label>
+    </div>
+    <div class="row">
+        <button id="btnConnect">Connect</button>
+        <button id="btnDisconnect">Disconnect</button>
+        <span id="status" class="muted">IDLE</span>
+    </div>
+    <hr style="border:none;border-top:1px solid #1f2630;margin:8px 0" />
+    <div class="row">
+        <label class="muted">QuoteId: <input id="quoteId" size="8" value="123" /></label>
+        <button id="btnSubscribe">SUB /topic/quotes.{quoteId}.tracking</button>
+        <button id="btnUnsub">Unsubscribe All</button>
+    </div>
+</header>
+
+<div id="log"></div>
+
+<script>
+    const logEl = document.getElementById('log');
+    function log(kind, title, body){
+        const line = document.createElement('div');
+        line.style.borderBottom='1px dashed #112';
+        line.style.padding='8px';
+        const ts = document.createElement('span'); ts.className='ts'; ts.textContent=new Date().toISOString();
+        const tag = document.createElement('span'); tag.className='tag '+(kind==='ok'?'ok':kind==='err'?'err':'info');
+        tag.textContent = kind==='ok'?'OK': kind==='err'?'ERROR':'INFO';
+        const msg = document.createElement('div'); msg.className='msg'; msg.innerHTML = `<strong>${title}</strong>\n${body || ''}`;
+        line.appendChild(ts); line.appendChild(tag); line.appendChild(msg);
+        logEl.appendChild(line); logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    let client = null; let subscriptions = [];
+
+    function buildWsUrl(baseUrl, jwt){
+        const sep = baseUrl.includes('?') ? '&' : '?';
+        return `${baseUrl}${sep}access_token=${encodeURIComponent(jwt)}`;
+    }
+
+    document.getElementById('btnConnect').onclick = ()=>{
+        const jwt = document.getElementById('jwt').value.trim();
+        const base = document.getElementById('url').value.trim();
+        if(!jwt){ alert('Pega tu JWT'); return; }
+        const url = buildWsUrl(base, jwt);
+        client = new StompJs.Client({
+            brokerURL: url,
+            reconnectDelay: 3000,
+            heartbeatIncoming: 10000,
+            heartbeatOutgoing: 10000,
+            onConnect: (frame)=>{
+                log('ok','CONNECTED', JSON.stringify(frame.headers || {}));
+                // subscribe user queue errors
+                try{ const s = client.subscribe('/user/queue/system/errors', (m)=>{ log('err','SYSTEM ERROR', m.body); }); subscriptions.push(s); }catch(e){}
+                document.getElementById('status').textContent='CONNECTED';
+            },
+            onStompError: (f)=>{ log('err','STOMP ERROR', f.headers?.message + ' | ' + (f.body||'')); },
+            onWebSocketClose: (ev)=>{ log('err','WS CLOSED', JSON.stringify(ev)); document.getElementById('status').textContent='CLOSED'; },
+            onWebSocketError: ()=>{ log('err','WS ERROR','Connection failed'); document.getElementById('status').textContent='ERROR'; }
+        });
+        client.activate(); log('info','CONNECTING', url);
+    };
+
+    document.getElementById('btnDisconnect').onclick = ()=>{
+        try{ subscriptions.forEach(s=>s.unsubscribe()); subscriptions = []; }catch{};
+        if(client){ client.deactivate(); client=null; log('info','DISCONNECTED'); document.getElementById('status').textContent='IDLE'; }
+    };
+
+    document.getElementById('btnSubscribe').onclick = ()=>{
+        if(!client || !client.connected){ alert('no conectado'); return; }
+        const quoteId = document.getElementById('quoteId').value.trim();
+        const dest = `/topic/quotes.${quoteId}.tracking`;
+        log('info','SUBSCRIBING', dest);
+        const sub = client.subscribe(dest, (msg)=>{ log('ok','RECV', msg.body); });
+        subscriptions.push(sub);
+    };
+
+    document.getElementById('btnUnsub').onclick = ()=>{
+        try{ subscriptions.forEach(s=>s.unsubscribe()); subscriptions=[]; log('info','UNSUBSCRIBED ALL'); }catch(e){ log('err','UNSUB ERROR', e.toString()); }
+    };
+
+</script>
+</body>
+</html>

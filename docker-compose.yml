@@ -24,6 +24,10 @@ services:
       MEDIA_CLOUDINARY_API_KEY: "613941565279744"
       MEDIA_CLOUDINARY_API_SECRET: "ZTYd7bmAHzkVDbL7dkzxFKfDCy8"
 
+      MEDIA_IMAGEKIT_URL: "https://ik.imagekit.io/meqvzizrd"
+      MEDIA_IMAGEKIT_PUBLIC_KEY: "public_nOVAGyeVHK3yYwzw8liuMFpCaA8="
+      MEDIA_IMAGEKIT_PRIVATE_KEY: "private_55BrgJagOgD31Th4gRStlNsZSac="
+
 
     volumes:
       - ./.secrets/firebase/firebase-admin.json:/run/secrets/firebase/firebase-admin.json:ro

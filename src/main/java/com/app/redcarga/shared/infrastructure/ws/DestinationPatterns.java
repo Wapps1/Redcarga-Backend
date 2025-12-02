@@ -1,5 +1,6 @@
 package com.app.redcarga.shared.infrastructure.ws;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,5 +36,13 @@ public final class DestinationPatterns {
         if (destination == null) return null;
         Matcher m = DEALS_QUOTES_CHAT.matcher(destination);
         return m.matches() ? Integer.parseInt(m.group(1)) : null;
+    }
+
+    private static final Pattern TRACKING_TOPIC =
+            Pattern.compile("^/topic/quotes\\.(\\d+)\\.tracking$");
+
+    public static Optional<Integer> extractQuoteIdFromTrackingTopic(String destination) {
+        var m = TRACKING_TOPIC.matcher(destination);
+        return m.matches() ? Optional.of(Integer.parseInt(m.group(1))) : Optional.empty();
     }
 }

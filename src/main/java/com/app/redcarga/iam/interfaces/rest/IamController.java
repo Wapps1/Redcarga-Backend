@@ -111,8 +111,8 @@ public class IamController {
         Integer accountId = accountIdOpt.get();
 
         // 2) Gate + emitir token si corresponde
-        long ttl = req.ttlSeconds() != null ? req.ttlSeconds() : 7200L; // 2h en dev
-        var outcome = authService.loginAndIssueToken(accountId, req.platform(), req.ip(), ttl);
+        //long ttl = req.ttlSeconds() != null ? req.ttlSeconds() : 7200L; // 2h en dev
+        var outcome = authService.loginAndIssueToken(accountId, req.platform(), req.ip());
 
         if (outcome instanceof AuthCommandService.LoginOutcome.Incomplete inc) {
             return ResponseEntity.status(423).body(

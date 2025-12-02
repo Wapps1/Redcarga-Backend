@@ -109,9 +109,6 @@ public class Quote extends AuditableAbstractAggregateRoot<Quote> {
         if (this.stateCode == null) throw new DomainException("quote_state_not_editable");
         // Allowed: PENDIENTE, TRATO, EN_ESPERA
         String s = this.stateCode;
-        if (!("PENDIENTE".equals(s) || "TRATO".equals(s) || "EN_ESPERA".equals(s))) {
-            throw new DomainException("quote_state_not_editable");
-        }
     }
 
     /** Transition PENDIENTE -> TRATO (start negotiation). Throws DomainException if invalid. */

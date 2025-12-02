@@ -1,7 +1,7 @@
 package com.app.redcarga.requests.interfaces.rest;
 
 import com.app.redcarga.requests.application.internal.gateways.Upload;
-import com.app.redcarga.requests.application.internal.queryservices.DimensionsEstimationQueryService;
+import com.app.redcarga.requests.domain.services.DimensionsEstimationQueryService;
 import com.app.redcarga.requests.interfaces.rest.responses.EstimateDimensionsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,8 +25,7 @@ public class DimensionsEstimationController {
     public ResponseEntity<EstimateDimensionsResponse> estimate(
             @RequestPart(required = false) @Nullable MultipartFile top_photo,
             @RequestPart(required = false) @Nullable MultipartFile side_photo,
-            @RequestParam(defaultValue = "100") double marker_size_mm,
-            @RequestParam(required = false) @Nullable String request_id
+            @RequestParam(defaultValue = "100") double marker_size_mm
     ) throws Exception {
 
         // Al menos una foto
@@ -39,7 +37,7 @@ public class DimensionsEstimationController {
         var top  = toUpload(top_photo);
         var side = toUpload(side_photo);
 
-        var view = service.estimate(top, side, marker_size_mm, request_id);
+        var view = service.estimate(top, side, marker_size_mm);
 
         return ResponseEntity.ok(new EstimateDimensionsResponse(
                 view.width_cm(), view.length_cm(), view.height_cm()

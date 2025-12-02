@@ -28,15 +28,6 @@ public class ChecklistInstanceItem {
     @Column(name = "completed_at")
     private Instant completedAt;
 
-    @Column(name = "document_id")
-    private Integer documentId;
-
-    @Column(name = "payment_id")
-    private Integer paymentId;
-
-    @Column(name = "assignment_id")
-    private Integer assignmentId;
-
     public Integer getInstanceItemId() { return instanceItemId; }
     public ChecklistInstance getInstance() { return instance; }
     public void setInstance(ChecklistInstance instance) { this.instance = instance; }
@@ -48,10 +39,4 @@ public class ChecklistInstanceItem {
     public void setCompletedBy(Integer completedBy) { this.completedBy = completedBy; }
     public Instant getCompletedAt() { return completedAt; }
     public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
-    public Integer getDocumentId() { return documentId; }
-    public void setDocumentId(Integer documentId) { this.documentId = documentId; }
-    public Integer getPaymentId() { return paymentId; }
-    public void setPaymentId(Integer paymentId) { this.paymentId = paymentId; }
-    public Integer getAssignmentId() { return assignmentId; }
-    public void setAssignmentId(Integer assignmentId) { this.assignmentId = assignmentId; }
 }

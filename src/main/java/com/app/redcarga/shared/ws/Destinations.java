@@ -14,4 +14,7 @@ public final class Destinations {
 
     /** Topic de chat por quote en Deals. */
     public static final String TOPIC_DEALS_QUOTES_CHAT = "/topic/deals.quotes.%d.chat";
+
+    public static final String TOPIC_QUOTE_TRACKING_TEMPLATE = "/topic/quotes.%d.tracking";
+
 }

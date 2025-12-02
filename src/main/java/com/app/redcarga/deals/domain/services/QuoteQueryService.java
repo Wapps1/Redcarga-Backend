@@ -13,4 +13,6 @@ public interface QuoteQueryService {
     List<QuoteItem> listItemsByQuoteId(Integer quoteId);
 
     List<Quote> listByRequestIdsAndState(List<Integer> requestIds, String stateCode);
+
+    Optional<Integer> getQuoteVersion(Integer quoteId);
 }

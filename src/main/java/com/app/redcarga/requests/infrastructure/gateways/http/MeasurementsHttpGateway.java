@@ -21,7 +21,7 @@ public class MeasurementsHttpGateway implements MeasurementsGateway {
     }
 
     @Override
-    public MeasurementsEstimate estimate(Upload top, Upload side, double markerSizeMm, String requestId) {
+    public MeasurementsEstimate estimate(Upload top, Upload side, double markerSizeMm) {
         if (top == null && side == null) {
             throw new IllegalArgumentException("at_least_one_photo_required");
         }
@@ -29,9 +29,6 @@ public class MeasurementsHttpGateway implements MeasurementsGateway {
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
         builder.part("marker_size_mm", Double.toString(markerSizeMm));
 
-        if (requestId != null && !requestId.isBlank()) {
-            builder.part("request_id", requestId);
-        }
 
         addPhoto(builder, "top_photo", top);
         addPhoto(builder, "side_photo", side);
