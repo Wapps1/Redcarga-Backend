@@ -97,6 +97,47 @@ public class PgChatMessageGateway implements ChatMessageGateway {
         return v == null ? 0 : v;
     }
 
+    @Override
+    public List<ChatMessageDto> findAll(int quoteId) {
+        var sql = """
+            select chat_message_id, quote_id, type_code, content_code, body, media_url, client_dedup_key, created_by, created_at, system_subtype_code, ref_change_id, ref_acceptance_id
+            from deals.chat_message
+            where quote_id=:q
+            order by chat_message_id asc
+            """;
+        return jdbc.query(sql, Map.of("q", quoteId), this::mapRowToDto);
+    }
+
+    @Override
+    public Integer getLastReadMessageId(int quoteId, int userId) {
+        var sql = """
+            select last_seen_message_id
+            from deals.chat_read
+            where quote_id = :quoteId
+              and user_id = :userId
+            """;
+        var params = Map.of("quoteId", quoteId, "userId", userId);
+        
+        return jdbc.query(sql, params, rs -> {
+            if (!rs.next()) return 0;
+            Integer val = (Integer) rs.getObject("last_seen_message_id");
+            return val != null ? val : 0;
+        });
+    }
+
+    @Override
+    public int countAfter(int quoteId, int afterId) {
+        var sql = """
+            select count(*)
+            from deals.chat_message
+            where quote_id = :quoteId
+              and chat_message_id > :afterId
+            """;
+        var params = Map.of("quoteId", quoteId, "afterId", afterId);
+        Integer count = jdbc.queryForObject(sql, params, Integer.class);
+        return count != null ? count : 0;
+    }
+
     private ChatMessageDto mapRowToDto(ResultSet rs, int rowNum) throws SQLException {
         Integer chatMessageId = rs.getInt("chat_message_id");
         Integer quoteId = rs.getInt("quote_id");

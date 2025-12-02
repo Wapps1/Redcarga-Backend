@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class PgChatParticipantGateway implements ChatParticipantGateway {
@@ -25,5 +27,27 @@ public class PgChatParticipantGateway implements ChatParticipantGateway {
             Boolean.class, quoteId, userId
         );
         return Boolean.TRUE.equals(b);
+    }
+
+    @Override
+    public List<Integer> findQuoteIdsByUserId(int userId) {
+        return jdbc.queryForList(
+            "SELECT quote_id FROM deals.chat_participant WHERE user_id = ? ORDER BY joined_at DESC",
+            Integer.class, userId
+        );
+    }
+
+    @Override
+    public List<ParticipantRecord> findParticipantsByQuoteId(int quoteId) {
+        var sql = """
+            SELECT cp.user_id, q.company_id
+            FROM deals.chat_participant cp
+            INNER JOIN deals.quote q ON q.quote_id = cp.quote_id
+            WHERE cp.quote_id = ?
+            """;
+        return jdbc.query(sql, (rs, rowNum) -> 
+            new ParticipantRecord(rs.getInt("user_id"), rs.getInt("company_id")),
+            quoteId
+        );
     }
 }

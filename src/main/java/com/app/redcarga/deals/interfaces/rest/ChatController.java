@@ -9,6 +9,8 @@ import com.app.redcarga.deals.interfaces.rest.requests.SendChatMessageRequest;
 import com.app.redcarga.deals.interfaces.rest.requests.MarkChatReadRequest;
 import com.app.redcarga.deals.interfaces.rest.responses.SendChatMessageResponse;
 import com.app.redcarga.deals.interfaces.rest.responses.ChatMessageDto;
+import com.app.redcarga.deals.interfaces.rest.responses.ChatHistoryResponse;
+import com.app.redcarga.deals.interfaces.rest.responses.ChatListResponse;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -55,13 +57,11 @@ public class ChatController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ChatMessageDto>> history(@PathVariable Integer quoteId,
-                                                        @RequestParam(value = "afterId", defaultValue = "0") Integer afterId,
-                                                        @RequestParam(value = "limit", defaultValue = "50") Integer limit,
-                                                        JwtAuthenticationToken principal) {
+    public ResponseEntity<ChatHistoryResponse> history(@PathVariable Integer quoteId,
+                                                       JwtAuthenticationToken principal) {
         Integer actor = Integer.valueOf(principal.getToken().getSubject());
-        var list = chatQueryService.getMessages(quoteId, afterId, limit, actor);
-        return ResponseEntity.ok(list);
+        var response = chatQueryService.getFullHistory(quoteId, actor);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/read")
@@ -78,4 +78,18 @@ public class ChatController {
         try { return UUID.fromString(raw.trim()); }
         catch (IllegalArgumentException e) { throw new DomainException("dedup_invalid"); }
     }
+
+
+    /*
+    @GetMapping("/list")
+    public ResponseEntity<ChatListResponse> listChats(JwtAuthenticationToken principal) {
+        Integer actor = Integer.valueOf(principal.getToken().getSubject());
+        boolean isProvider = principal.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_PROVIDER".equals(a.getAuthority()));
+
+        var response = chatQueryService.listChats(actor, isProvider);
+        return ResponseEntity.ok(response);
+    }
+     */
 }
+
