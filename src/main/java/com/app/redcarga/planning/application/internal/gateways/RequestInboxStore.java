@@ -22,4 +22,6 @@ public interface RequestInboxStore {
                         Integer totalQuantity);
 
     List<Integer> closeAllForRequest(int requestId);
+
+    void updateStatus(int companyId, int requestId, String newStatus);
 }

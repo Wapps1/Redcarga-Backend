@@ -1,6 +1,7 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
 import com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway;
+import com.app.redcarga.deals.application.internal.outboundservices.acl.PlanningRequestInboxClient;
 import com.app.redcarga.deals.application.internal.outboundservices.acl.RequestsServiceClient;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
 import com.app.redcarga.deals.domain.repositories.QuoteRepository;
@@ -22,6 +23,7 @@ public class ShipmentCommandServiceImpl implements ShipmentCommandService {
     private final DealsChatOutboxAdapter chatOutboxAdapter;
     private final QuoteRepository quoteRepository;
     private final RequestsServiceClient requestsServiceClient;
+    private final PlanningRequestInboxClient planningRequestInboxClient;
 
     @Override
     @Transactional
@@ -48,6 +50,8 @@ public class ShipmentCommandServiceImpl implements ShipmentCommandService {
         quoteRepository.save(quote);
 
         requestsServiceClient.closeRequest(requestId);
+
+        planningRequestInboxClient.closeAllRequestInboxForRequest(requestId);
 
         // Actualizar quotes relacionadas del mismo request
         // EN_ESPERA -> CERRADA_NO_ADJ

@@ -16,19 +16,27 @@ public class PgRequestInboxQueryRepository implements RequestInboxQueryRepositor
 
     private final NamedParameterJdbcTemplate jdbc;
 
-    private static final String SQL = """
-        select request_id, company_id, matched_route_id, route_type_id, status, created_at,
-               requester_name, origin_department_name, origin_province_name,
-               dest_department_name, dest_province_name, total_quantity
-        from planning.request_inbox
-        where company_id = :companyId
-        order by created_at desc
-        """;
-
     @Override
-    public List<RequestInboxEntryView> findByCompany(int companyId) {
-        var params = new MapSqlParameterSource().addValue("companyId", companyId);
-        return jdbc.query(SQL, params, (rs, rowNum) -> new RequestInboxEntryView(
+    public List<RequestInboxEntryView> findByCompany(int companyId, String status) {
+        StringBuilder sql = new StringBuilder("""
+            select request_id, company_id, matched_route_id, route_type_id, status, created_at,
+                   requester_name, origin_department_name, origin_province_name,
+                   dest_department_name, dest_province_name, total_quantity
+            from planning.request_inbox
+            where company_id = :companyId
+            """);
+
+        var params = new MapSqlParameterSource()
+                .addValue("companyId", companyId);
+
+        if (status != null && !status.isBlank()) {
+            sql.append(" and status = :status");
+            params.addValue("status", status.trim().toUpperCase());
+        }
+
+        sql.append(" order by created_at desc");
+
+        return jdbc.query(sql.toString(), params, (rs, rowNum) -> new RequestInboxEntryView(
             rs.getInt("request_id"),
             rs.getInt("company_id"),
             rs.getObject("matched_route_id", Integer.class),

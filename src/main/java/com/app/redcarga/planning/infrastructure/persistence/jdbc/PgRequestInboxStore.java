@@ -81,4 +81,18 @@ public class PgRequestInboxStore implements RequestInboxStore {
 
         return companies;
     }
+
+    @Override
+    public void updateStatus(int companyId, int requestId, String newStatus) {
+        jdbc.update("""
+            update planning.request_inbox
+            set status = :status
+            where company_id = :cid and request_id = :rid
+            """,
+            Map.of(
+                "cid", companyId,
+                "rid", requestId,
+                "status", newStatus
+            ));
+    }
 }

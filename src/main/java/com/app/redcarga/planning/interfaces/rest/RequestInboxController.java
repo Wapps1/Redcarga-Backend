@@ -21,8 +21,10 @@ public class RequestInboxController {
     private final RequestInboxQueryService queryService;
 
     @GetMapping
-    public List<RequestInboxEntryResponse> findByCompany(@PathVariable int companyId) {
-        List<RequestInboxEntryView> rows = queryService.findByCompany(companyId);
+    public List<RequestInboxEntryResponse> findByCompany(
+            @PathVariable int companyId,
+            @RequestParam(required = false) String status) {
+        List<RequestInboxEntryView> rows = queryService.findByCompany(companyId, status);
         return rows.stream().map(RequestInboxEntryResponse::from).collect(Collectors.toList());
     }
 
