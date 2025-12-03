@@ -5,5 +5,6 @@ public record CurrentLocationResponse(
         Integer driverId,
         double lat,
         double lng,
+        Double speed,
         String updatedAt
 ) {}

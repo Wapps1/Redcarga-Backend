@@ -178,6 +178,39 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                 }
             }
         }
+
+        // Validate SEND frames to tracking update endpoint
+        if (StompCommand.SEND.equals(acc.getCommand())) {
+            final String dest = acc.getDestination();
+            var trackingQuoteId = DestinationPatterns.extractQuoteIdFromAppTrackingUpdate(dest);
+            if (trackingQuoteId.isPresent()) {
+                var user = acc.getUser();
+                if (user == null || user.getName() == null) {
+                    notifyAccessDenied(null, "No autenticado", dest);
+                    return null;
+                }
+                final int accountId;
+                try {
+                    accountId = Integer.parseInt(user.getName());
+                } catch (NumberFormatException e) {
+                    notifyAccessDenied(user.getName(), "Principal inválido", dest);
+                    return null;
+                }
+                int qid = trackingQuoteId.get();
+                boolean isDriver;
+                try {
+                    isDriver = driverQuoteAssignmentVerifier.isDriverOfQuote(qid, accountId);
+                } catch (Exception ex) {
+                    notifyAccessDenied(user.getName(), "Error al verificar driver", dest);
+                    return null;
+                }
+                if (!isDriver) {
+                    log.warn("[WS] SEND bloqueado: account {} not driver for quote {}", accountId, qid);
+                    notifyAccessDenied(user.getName(), "No eres el driver asignado a quote=" + qid, dest);
+                    return null;
+                }
+            }
+        }
         return message; // dejar pasar los demás
     }
 

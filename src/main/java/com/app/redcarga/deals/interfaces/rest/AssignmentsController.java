@@ -100,7 +100,7 @@ public class AssignmentsController {
             @ApiResponse(responseCode = "403", description = "Not authorized to view these quotes", content = @Content),
             @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content)
     })
-    @GetMapping("/companies/drivers/{driverId}/assignments/active")
+    @GetMapping("/companies/drivers/assignments/active")
     public ResponseEntity<List<AcceptedAssignmentInfo>> getAcceptedAssignmentsForDriver(
             JwtAuthenticationToken principal) {
 

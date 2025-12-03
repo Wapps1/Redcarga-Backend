@@ -12,8 +12,6 @@ public interface JpaCurrentQuoteLocationRepository
         extends JpaRepository<CurrentQuoteLocation, Integer>, CurrentQuoteLocationRepository {
 
     @Override
-    default Optional<CurrentQuoteLocation> findByQuoteId(Integer quoteId) {
-        return findById(quoteId);
-    }
+    Optional<CurrentQuoteLocation> findByQuoteId(Integer quoteId);
 
 }

@@ -19,4 +19,8 @@ public class DealsFacadeClient {
     public boolean isDriverOfQuote(Integer quoteId, Integer accountId) {
         return dealsFacade.isDriverOfQuote(quoteId, accountId);
     }
+
+    public Optional<Integer> findDriverIdByQuoteId(Integer quoteId) {
+        return dealsFacade.findDriverIdByQuoteId(quoteId);
+    }
 }

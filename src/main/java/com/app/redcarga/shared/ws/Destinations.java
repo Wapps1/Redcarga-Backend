@@ -15,6 +15,18 @@ public final class Destinations {
     /** Topic de chat por quote en Deals. */
     public static final String TOPIC_DEALS_QUOTES_CHAT = "/topic/deals.quotes.%d.chat";
 
+    /** Topic de tracking por quote. */
     public static final String TOPIC_QUOTE_TRACKING_TEMPLATE = "/topic/quotes.%d.tracking";
+
+    /** App destination para driver enviando ubicación. */
+    public static final String APP_TRACKING_UPDATE_TEMPLATE = "/app/quotes.%d.tracking.update";
+
+    public static String topicQuoteTracking(int quoteId) {
+        return String.format(TOPIC_QUOTE_TRACKING_TEMPLATE, quoteId);
+    }
+
+    public static String appTrackingUpdate(int quoteId) {
+        return String.format(APP_TRACKING_UPDATE_TEMPLATE, quoteId);
+    }
 
 }

@@ -37,10 +37,12 @@ public class DealsFacadeImpl implements DealsFacade {
         Optional<Assignment> assignment = assignmentRepo.findByQuoteId(quoteId);
         if (assignment.isEmpty()) return false;
         Integer driverId = assignment.get().getDriverId();
-        // driversClient expects (driverId, accountId) or (accountId, driverId) ?
-        // DriversFacadeClient in your code exposes: existsByIdAndAccountId(Integer accountId, Integer driverId)
-        // The DriversFacadeClient wrapper below delegates to DriversFacade.existsByIdAndAccountId, which uses
-        // (accountId, driverId) in the signature in your repo — adapt if your signature differs.
         return driversClient.existsByIdAndAccountId(accountId, driverId);
+    }
+
+    @Override
+    public Optional<Integer> findDriverIdByQuoteId(Integer quoteId) {
+        if (quoteId == null) return Optional.empty();
+        return assignmentRepo.findByQuoteId(quoteId).map(Assignment::getDriverId);
     }
 }

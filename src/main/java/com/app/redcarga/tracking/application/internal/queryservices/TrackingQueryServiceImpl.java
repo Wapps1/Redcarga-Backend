@@ -25,6 +25,7 @@ public class TrackingQueryServiceImpl implements TrackingQueryService {
                         e.getDriverId(),
                         e.getLat().doubleValue(),
                         e.getLng().doubleValue(),
+                        e.getSpeed(),
                         e.getUpdatedAt().toString()
                 ));
     }

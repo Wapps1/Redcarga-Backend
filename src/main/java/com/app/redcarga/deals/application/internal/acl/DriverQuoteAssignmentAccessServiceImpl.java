@@ -26,7 +26,7 @@ public class DriverQuoteAssignmentAccessServiceImpl implements DriverQuoteAssign
         Integer driverId = assignment.get().getDriverId();
 
         // 3. Verificar que accountId pertenece a ese driver
-        return driversClient.existsByIdAndAccountId(driverId, accountId);
+        return driversClient.existsByIdAndAccountId(accountId, driverId);
     }
 
 }
