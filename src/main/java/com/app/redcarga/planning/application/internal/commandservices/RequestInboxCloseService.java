@@ -22,10 +22,14 @@ public class RequestInboxCloseService {
         var companies = inbox.closeAllForRequest(requestId);
         if (!notify || companies.isEmpty()) return;
 
-        Instant closedAt = Instant.now(clock);
-        for (Integer companyId : companies) {
-            notifications.notifyRequestClosed(requestId, companyId);
-            // Si quieres enviar el closedAt, puedes ajustar notifyRequestClosed para incluirlo.
-        }
+        // Instant closedAt = Instant.now(clock);
+        // for (Integer companyId : companies) {
+        //     notifications.notifyRequestClosed(requestId, companyId);
+        // }
+    }
+
+    @Transactional
+    public void updateInboxStatus(int companyId, int requestId, String newStatus) {
+        inbox.updateStatus(companyId, requestId, newStatus);
     }
 }

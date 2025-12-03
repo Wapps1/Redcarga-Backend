@@ -1,6 +1,7 @@
 package com.app.redcarga.deals.application.internal.commandservices;
 
 import com.app.redcarga.deals.application.internal.gateways.ChatMessageGateway;
+import com.app.redcarga.deals.application.internal.outboundservices.acl.PlanningRequestInboxClient;
 import com.app.redcarga.deals.application.internal.outboundservices.notifications.NewQuoteNotification;
 import com.app.redcarga.deals.application.internal.outboundservices.notifications.NotificationsPort;
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
@@ -32,6 +33,7 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
     private final DealsChatOutboxAdapter chatOutboxAdapter;
     private final DealsOutboxPublisher outboxPublisher;
     private final ObjectMapper objectMapper;
+    private final PlanningRequestInboxClient planningRequestInboxClient;
 
     @Override
     @Transactional
@@ -42,6 +44,8 @@ public class QuoteCommandServiceImpl implements QuoteCommandService {
         }
         Quote quote = Quote.create(cmd, creatorAccountId);
     quoteRepository.save(quote);
+
+    planningRequestInboxClient.updateRequestInboxStatus(cmd.companyId(), cmd.requestId(),"QUOTE");
 
     // publish to outbox (same transaction)
     var notif = new NewQuoteNotification(

@@ -16,7 +16,7 @@ public class RequestInboxQueryServiceImpl implements RequestInboxQueryService {
     private final RequestInboxQueryRepository repo;
 
     @Override
-    public List<RequestInboxEntryView> findByCompany(int companyId) {
-        return repo.findByCompany(companyId);
+    public List<RequestInboxEntryView> findByCompany(int companyId, String status) {
+        return repo.findByCompany(companyId, status);
     }
 }

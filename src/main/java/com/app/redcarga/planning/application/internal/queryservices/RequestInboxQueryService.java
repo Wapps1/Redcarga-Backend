@@ -4,5 +4,5 @@ import com.app.redcarga.planning.application.internal.views.RequestInboxEntryVie
 import java.util.List;
 
 public interface RequestInboxQueryService {
-    List<RequestInboxEntryView> findByCompany(int companyId);
+    List<RequestInboxEntryView> findByCompany(int companyId, String status);
 }
