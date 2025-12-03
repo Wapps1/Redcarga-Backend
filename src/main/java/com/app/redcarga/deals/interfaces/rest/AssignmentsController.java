@@ -2,6 +2,7 @@ package com.app.redcarga.deals.interfaces.rest;
 
 import com.app.redcarga.deals.domain.model.aggregates.Quote;
 import com.app.redcarga.deals.domain.model.entities.Assignment;
+import com.app.redcarga.deals.domain.queries.AcceptedAssignmentInfo;
 import com.app.redcarga.deals.domain.services.AssignmentCommandService;
 import com.app.redcarga.deals.domain.services.AssignmentQueryService;
 import com.app.redcarga.deals.domain.services.QuoteCommandService;
@@ -99,14 +100,20 @@ public class AssignmentsController {
             @ApiResponse(responseCode = "403", description = "Not authorized to view these quotes", content = @Content),
             @ApiResponse(responseCode = "404", description = "Driver not found", content = @Content)
     })
-    @GetMapping("/companies/{companyId}/drivers/{driverId}/assignments/active")
-    public ResponseEntity<List<Assignment>> getAcceptedAssignmentsForDriver(
-            @PathVariable Integer companyId,
-            @PathVariable Integer driverId,
+    @GetMapping("/companies/drivers/assignments/active")
+    public ResponseEntity<List<AcceptedAssignmentInfo>> getAcceptedAssignmentsForDriver(
             JwtAuthenticationToken principal) {
 
+
         Integer accountId = Integer.valueOf(principal.getToken().getSubject());
-        List<Assignment> assignments = assignmentQueryService.getAcceptedAssignmentsForDriver(companyId, driverId, accountId);
+        List<AcceptedAssignmentInfo> assignments = assignmentQueryService.getAcceptedAssignmentsForDriver(accountId);
         return ResponseEntity.ok(assignments);
+    }
+
+    @GetMapping("/assignments/by-quote/{quoteId}")
+    public ResponseEntity<Assignment> getAssignmentByQuoteId(@PathVariable Integer quoteId) {
+        return assignmentQueryService.getAssignmentByQuoteId(quoteId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

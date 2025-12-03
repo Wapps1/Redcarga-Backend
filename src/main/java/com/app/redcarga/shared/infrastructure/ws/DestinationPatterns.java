@@ -45,4 +45,13 @@ public final class DestinationPatterns {
         var m = TRACKING_TOPIC.matcher(destination);
         return m.matches() ? Optional.of(Integer.parseInt(m.group(1))) : Optional.empty();
     }
+
+    /** /app/quotes.{quoteId}.tracking.update */
+    private static final Pattern APP_TRACKING_UPDATE =
+            Pattern.compile("^/app/quotes\\.(\\d+)\\.tracking\\.update$");
+
+    public static Optional<Integer> extractQuoteIdFromAppTrackingUpdate(String destination) {
+        var m = APP_TRACKING_UPDATE.matcher(destination);
+        return m.matches() ? Optional.of(Integer.parseInt(m.group(1))) : Optional.empty();
+    }
 }

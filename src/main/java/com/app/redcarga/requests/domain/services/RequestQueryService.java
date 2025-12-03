@@ -4,6 +4,7 @@ import com.app.redcarga.requests.domain.model.aggregates.Request;
 
 import java.util.List;
 import java.util.Optional;
+import com.app.redcarga.requests.domain.repositories.RequestNameAndUbigeo;
 
 public interface RequestQueryService {
     Optional<Request> findById(Integer requestId);
@@ -11,4 +12,6 @@ public interface RequestQueryService {
     boolean existsById(Integer requestId);
     List<Request> findAllByRequester(Integer requesterAccountId);
     public boolean isRequester(Integer requestId, Integer accountId);
+
+    Optional<RequestNameAndUbigeo> getRequestNameById(Integer requestId);
 }

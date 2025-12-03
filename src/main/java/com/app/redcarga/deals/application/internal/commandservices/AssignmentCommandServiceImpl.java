@@ -105,4 +105,5 @@ public class AssignmentCommandServiceImpl implements AssignmentCommandService {
             throw new DomainException("assignment_optimistic_lock");
         }
     }
+    
 }

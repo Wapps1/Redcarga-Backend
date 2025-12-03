@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import com.app.redcarga.requests.domain.repositories.RequestNameAndUbigeo;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +52,11 @@ public class RequestFacadeImpl implements RequestFacade {
 
         request.close();
         requestRepository.save(request);
+    }
+
+    @Override
+    public Optional<RequestNameAndUbigeoSnapshot> getRequestName(Integer requestId) {
+        return requestQueryService.getRequestNameById(requestId)
+                .map(r -> new RequestNameAndUbigeoSnapshot(r.requestId(), r.requestName(), r.origin(), r.destination()));
     }
 }

@@ -1,6 +1,7 @@
 package com.app.redcarga.fleet.domain.repositories;
 
 import com.app.redcarga.fleet.domain.model.aggregates.Driver;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,4 +13,6 @@ public interface DriverRepository {
     List<Driver> findAllByCompanyId(Integer companyId);
     void delete(Driver driver);
     boolean existsByIdAndAccountId(Integer driverId, Integer accountId);
+
+    Optional<Driver> findByAccountId(@Param("accountId") Integer accountId);
 }

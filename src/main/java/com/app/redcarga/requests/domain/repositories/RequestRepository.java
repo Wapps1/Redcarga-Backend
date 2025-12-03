@@ -4,6 +4,7 @@ import com.app.redcarga.requests.domain.model.aggregates.Request;
 
 import java.util.List;
 import java.util.Optional;
+import com.app.redcarga.requests.domain.repositories.RequestNameUbigeoRaw;
 
 public interface RequestRepository {
     Request save(Request request);
@@ -15,4 +16,6 @@ public interface RequestRepository {
      * Carga detallada con ítems e imágenes para evitar LazyInitializationException.
      */
     Optional<Request> findByIdWithItemsAndImages(Integer id);
+
+    Optional<RequestNameUbigeoRaw> findRequestNameById(Integer requestId);
 }

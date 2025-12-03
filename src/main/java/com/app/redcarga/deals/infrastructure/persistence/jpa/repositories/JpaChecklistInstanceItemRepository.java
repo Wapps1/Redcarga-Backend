@@ -22,6 +22,10 @@ public interface JpaChecklistInstanceItemRepository extends JpaRepository<Checkl
 	@Query("select i from ChecklistInstanceItem i where i.instance.instanceId = :instanceId and i.code = :code")
 	Optional<ChecklistInstanceItem> findByInstanceInstanceIdAndCode(Integer instanceId, String code);
 
+	@Override
+	@Query("select i from ChecklistInstanceItem i where i.instance.instanceId = :instanceId order by i.instanceItemId")
+	List<ChecklistInstanceItem> findAllByInstanceId(Integer instanceId);
+
 	// FIX: usar instance.instanceId para resolver los códigos no-DONE
 	@Override
 	@Query("""
