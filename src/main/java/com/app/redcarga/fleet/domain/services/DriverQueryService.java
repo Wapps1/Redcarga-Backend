@@ -1,5 +1,6 @@
 package com.app.redcarga.fleet.domain.services;
 
+import com.app.redcarga.fleet.domain.model.queries.DriverAccountInfo;
 import com.app.redcarga.fleet.interfaces.rest.responses.DriverView;
 
 import java.util.List;
@@ -15,6 +16,9 @@ public interface DriverQueryService {
     List<DriverView> findAllByCompany(Integer companyId, Integer accountId);
 
     boolean existsByIdAndAccountId(Integer accountId, Integer driverId);
+
+    // Nuevo: obtener driverId + companyId por accountId
+    Optional<DriverAccountInfo> getDriverAccountInfoByAccountId(Integer accountId);
 }
 
 

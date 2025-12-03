@@ -1,5 +1,6 @@
 package com.app.redcarga.requests.interfaces.acl;
 
+import com.app.redcarga.requests.domain.model.valueobjects.UbigeoSnapshot;
 import java.util.Optional;
 
 /**
@@ -20,4 +21,8 @@ public interface RequestFacade {
      */
     void closeRequest(Integer requestId);
 
+    // Devuelve nombre + origin + destination como snapshot público
+    record RequestNameAndUbigeoSnapshot(Integer requestId, String requestName, UbigeoSnapshot origin, UbigeoSnapshot destination) {}
+
+    Optional<RequestNameAndUbigeoSnapshot> getRequestName(Integer requestId);
 }

@@ -4,6 +4,8 @@ import com.app.redcarga.fleet.interfaces.acl.DriversFacade;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class DriversFacadeClient {
@@ -11,5 +13,10 @@ public class DriversFacadeClient {
     private final DriversFacade driversFacade;
     public boolean existsByIdAndAccountId(Integer accountId, Integer driverId) {
         return driversFacade.existsByIdAndAccountId(accountId, driverId);
+    }
+
+
+    public Optional<DriversFacade.DriverAccountSnapshot> getDriverAccountByAccountId(Integer accountId){
+        return driversFacade.getDriverAccountByAccountId(accountId);
     }
 }

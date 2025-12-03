@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import com.app.redcarga.shared.domain.exceptions.DomainException;
+import org.springframework.http.HttpStatus;
 
 @RestControllerAdvice
 public class ControllerAdvice {
@@ -44,6 +46,17 @@ public class ControllerAdvice {
     public ResponseEntity<Object> handleAccess(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(base("forbidden", "Acceso denegado"));
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<Object> handleDomainException(DomainException ex) {
+        String code = ex.getMessage() != null ? ex.getMessage() : "domain_error";
+        HttpStatus status = switch (code) {
+            case "not_authorized_for_quote" -> HttpStatus.FORBIDDEN;
+            case "location_not_found" -> HttpStatus.NOT_FOUND;
+            default -> HttpStatus.BAD_REQUEST;
+        };
+        return ResponseEntity.status(status).body(base(code, code));
     }
 
     // Hook para DomainException propia si la defines

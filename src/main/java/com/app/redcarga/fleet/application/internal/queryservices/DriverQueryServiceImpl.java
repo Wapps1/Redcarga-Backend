@@ -3,12 +3,15 @@ package com.app.redcarga.fleet.application.internal.queryservices;
 import com.app.redcarga.fleet.application.internal.outboundservices.acl.IdentityAccountFleetService;
 import com.app.redcarga.fleet.application.internal.outboundservices.acl.ProvidersMembershipFleetService;
 import com.app.redcarga.fleet.domain.model.aggregates.Driver;
+import com.app.redcarga.fleet.domain.model.queries.DriverAccountInfo;
 import com.app.redcarga.fleet.domain.repositories.DriverRepository;
 import com.app.redcarga.fleet.domain.services.DriverQueryService;
 import com.app.redcarga.fleet.interfaces.rest.responses.DriverView;
 import com.app.redcarga.identity.interfaces.acl.IdentityPersonSnapshot;
 import com.app.redcarga.shared.domain.exceptions.DomainException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,7 @@ public class DriverQueryServiceImpl implements DriverQueryService {
     private final DriverRepository drivers;
     private final IdentityAccountFleetService identity;
     private final ProvidersMembershipFleetService providers;
+    private static final Logger log = LoggerFactory.getLogger(DriverQueryServiceImpl.class);
 
     @Override
     public Optional<DriverView> findById(Integer driverId) {
@@ -86,6 +90,19 @@ public class DriverQueryServiceImpl implements DriverQueryService {
                 d.getCreatedAt(),
                 d.getUpdatedAt()
         );
+    }
+
+    @Override
+    public Optional<DriverAccountInfo> getDriverAccountInfoByAccountId(Integer accountId) {
+        log.debug("DriverQueryService.getDriverAccountInfoByAccountId({})", accountId);
+        if (accountId == null) {
+            log.debug("accountId is null");
+            return Optional.empty();
+        }
+        Optional<DriverAccountInfo> res = drivers.findByAccountId(accountId)
+                .map(d -> new DriverAccountInfo(d.getId(), d.getCompanyId()));
+        log.debug("DriverRepository.findByAccountId({}) -> {}", accountId, res);
+        return res;
     }
 }
 

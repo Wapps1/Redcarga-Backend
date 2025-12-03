@@ -145,7 +145,7 @@ public class MultiFlywayConfig {
         return flyway;
     }
 
-    @Bean
+    @Bean(name = "flywayTracking")
     @DependsOn({"flywayDeals","flywayFleet"})
     public Flyway flywayTracking(DataSource ds) {
         Flyway flyway = Flyway.configure()
